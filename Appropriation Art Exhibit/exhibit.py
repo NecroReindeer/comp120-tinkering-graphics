@@ -1,6 +1,6 @@
 __author__ = 'Harriet'
 
-import Image
+from PIL import Image
 
 
 def getImage(file):
@@ -8,27 +8,46 @@ def getImage(file):
     return img
 
 
+def createColor(red, green, blue):
+    newColor = [red, green, blue]
+    return newColor
+
+
+def assignColor(pixel, color):
+    pixel = (color[0], color[1], color[2])
+    return pixel
+
+
+
 # Changes colour of each pixel to the dominant colour
 # component, above a given threshold
-def changeToColor(img, colourIndex, minThreshold=50):
+def changeToColor(img, chosenColorIndex, minThreshold=50):
+
+    NUMBER_OF_COMPONENTS = 3
     pixels = img.load()
+
     for x in range(0, img.size[0]):
         for y in range(0, img.size[1]):
             currentPixel = pixels[x,y]
             canChange = True
 
-            for component in range(0,3):
-                if component != colourIndex:
-                    if currentPixel[component] >= currentPixel[colourIndex] * 0.9:
+            for componentIndex in range(NUMBER_OF_COMPONENTS):
+
+                currentComponentValue = currentPixel[componentIndex]
+                chosenComponentValue = currentPixel[chosenColorIndex]
+
+                if componentIndex != chosenColorIndex:
+                    if (currentComponentValue >=
+                            chosenComponentValue * 0.9):
                         canChange = False
-                elif currentPixel[colourIndex] <= minThreshold:
+                elif currentComponentValue <= minThreshold:
                     canChange = False
 
             if canChange:
-                newColor = [0, 0, 0]
-                newColor[colourIndex] = 255
-                currentPixel = (newColor[0], newColor[1], newColor[2])
-                pixels[x,y] = currentPixel
+                newColor = createColor(0,0,0)
+                newColor[chosenColorIndex] = 255
+                newPixel = assignColor(currentPixel, newColor)
+                pixels[x,y] = newPixel
 
 
 # Changes colour of any pixel in the image
@@ -52,7 +71,9 @@ def changeHighColors(file="jegermeister.jpg"):
     for i in range(0,numberOfColorComponents):
         changeToColor(img,i)
     changeRestToBlack(img)
-    img.save("changeHighColors " + file)
 
+    newFileName = "changeHighColours " + file
+    img.show()
+    img.save(newFileName)
 
 changeHighColors()
