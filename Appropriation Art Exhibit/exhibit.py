@@ -2,6 +2,8 @@ __author__ = 'Harriet'
 
 from PIL import Image
 
+# The number of colour components, in this case, 3 - red, green and blue
+NUMBER_OF_COLOR_COMPONENTS = 3
 
 def getImage(file):
     img = Image.open(file)
@@ -13,17 +15,14 @@ def createColor(red, green, blue):
     return newColor
 
 
-def assignColor(pixel, color):
-    pixel = (color[0], color[1], color[2])
-    return pixel
-
+def assignColor(color):
+    color = (color[0], color[1], color[2])
+    return color
 
 
 # Changes colour of each pixel to the dominant colour
 # component, above a given threshold
-def changeToColor(img, chosenColorIndex, minThreshold=50):
-
-    NUMBER_OF_COMPONENTS = 3
+def changeToDominantColor(img, chosenColorIndex, minThreshold=50):
     pixels = img.load()
 
     for x in range(0, img.size[0]):
@@ -31,14 +30,13 @@ def changeToColor(img, chosenColorIndex, minThreshold=50):
             currentPixel = pixels[x,y]
             canChange = True
 
-            for componentIndex in range(NUMBER_OF_COMPONENTS):
+            for componentIndex in range(NUMBER_OF_COLOR_COMPONENTS):
 
                 currentComponentValue = currentPixel[componentIndex]
-                chosenComponentValue = currentPixel[chosenColorIndex]
+                componentBeingChecked = currentPixel[chosenColorIndex]
 
                 if componentIndex != chosenColorIndex:
-                    if (currentComponentValue >=
-                            chosenComponentValue * 0.9):
+                    if (currentComponentValue >= componentBeingChecked * 0.9):
                         canChange = False
                 elif currentComponentValue <= minThreshold:
                     canChange = False
@@ -46,8 +44,7 @@ def changeToColor(img, chosenColorIndex, minThreshold=50):
             if canChange:
                 newColor = createColor(0,0,0)
                 newColor[chosenColorIndex] = 255
-                newPixel = assignColor(currentPixel, newColor)
-                pixels[x,y] = newPixel
+                pixels[x,y] = assignColor(newColor)
 
 
 # Changes colour of any pixel in the image
@@ -56,10 +53,11 @@ def changeRestToBlack(img):
     pixels = img.load()
     for x in range(0, img.size[0]):
         for y in range(0, img.size[1]):
-            if not (pixels[x,y] == (255, 0, 0) or
-                    pixels[x,y] == (0, 255, 0) or
-                    pixels[x,y] == (0, 0, 255)):
-                pixels[x,y] = (0, 0, 0)
+            currentPixel = pixels[x,y]
+            if not (currentPixel == (255,0,0) or
+                    currentPixel == (0,255,0) or
+                    currentPixel == (0,0,255)):
+                pixels[x,y] = (0,0,0)
 
 
 # Changes pixels with a colour component above a given threshold to
@@ -67,13 +65,13 @@ def changeRestToBlack(img):
 # changes every other colour to black.
 def changeHighColors(file="jegermeister.jpg"):
     img = getImage(file)
-    numberOfColorComponents = 3
-    for i in range(0,numberOfColorComponents):
-        changeToColor(img,i)
+    for i in range(NUMBER_OF_COLOR_COMPONENTS):
+        changeToDominantColor(img,i)
     changeRestToBlack(img)
 
     newFileName = "changeHighColours " + file
     img.show()
     img.save(newFileName)
+
 
 changeHighColors()
