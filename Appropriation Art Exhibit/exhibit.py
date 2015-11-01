@@ -33,17 +33,22 @@ def getHeight(img):
     return height
 
 
+# Adds the coordinates of each pixel in an image to a list
+def addPixelsToList(img):
+    coordinates = []
+    for x in range(0, getWidth(img)):
+        for y in range(0, getHeight(img)):
+            coordinates.append((x,y))
+    return coordinates
+
+
 # Makes a copy of the image and randomly shuffles all of its pixels
 def getShuffledImage(img):
     originalImg = img
-    newImg = originalImg
+    newImg = img
     originalPixels = originalImg.load()
     shuffledPixels = newImg.load()
-    remainingIndices = []
-
-    for x in range(0, getWidth(originalImg)):
-        for y in range(0, getHeight(originalImg)):
-            remainingIndices.append((x,y))
+    remainingIndices = addPixelsToList(img)
 
     for x in range(0, getWidth(originalImg)):
         for y in range(0, getHeight(originalImg)):
@@ -113,5 +118,5 @@ def shufflePixels(file="sad.jpg"):
     img.save(newFileName)
 
 
-#changeHighColors()
+changeHighColors()
 shufflePixels()
