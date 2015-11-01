@@ -1,6 +1,9 @@
 __author__ = 'Harriet'
 
+import random
+
 from PIL import Image
+
 
 # The number of colour components, in this case, 3 - red, green and blue
 NUMBER_OF_COLOR_COMPONENTS = 3
@@ -20,18 +23,47 @@ def assignColor(color):
     return color
 
 
+def getWidth(img):
+    width = img.size[0]
+    return width
+
+
+def getHeight(img):
+    height = img.size[1]
+    return height
+
+
+# Makes a copy of the image and randomly shuffles all of its pixels
+def getShuffledImage(img):
+    originalImg = img
+    newImg = originalImg
+    originalPixels = originalImg.load()
+    shuffledPixels = newImg.load()
+    remainingIndices = []
+
+    for x in range(0, getWidth(originalImg)):
+        for y in range(0, getHeight(originalImg)):
+            remainingIndices.append((x,y))
+
+    for x in range(0, getWidth(originalImg)):
+        for y in range(0, getHeight(originalImg)):
+            currentPixel = originalPixels[x,y]
+            targetIndex = random.randrange(0, len(remainingIndices))
+            targetPixel = remainingIndices.pop(targetIndex)
+            shuffledPixels[targetPixel[0], targetPixel[1]] = currentPixel
+
+
 # Changes colour of each pixel to the dominant colour
 # component, above a given threshold
-def changeToDominantColor(img, chosenColorIndex, minThreshold=50):
+def changeToDominantColor(img, chosenColorIndex, minThreshold):
     pixels = img.load()
 
-    for x in range(0, img.size[0]):
-        for y in range(0, img.size[1]):
+    for x in range(getWidth(img)):
+        for y in range(getHeight(img)):
             currentPixel = pixels[x,y]
             canChange = True
 
             for componentIndex in range(NUMBER_OF_COLOR_COMPONENTS):
-
                 currentComponentValue = currentPixel[componentIndex]
                 componentBeingChecked = currentPixel[chosenColorIndex]
 
@@ -51,8 +83,8 @@ def changeToDominantColor(img, chosenColorIndex, minThreshold=50):
 # that isn't purely red, green or blue to black
 def changeRestToBlack(img):
     pixels = img.load()
-    for x in range(0, img.size[0]):
-        for y in range(0, img.size[1]):
+    for x in range(0, getWidth(img)):
+        for y in range(0, getHeight(img)):
             currentPixel = pixels[x,y]
             if not (currentPixel == (255,0,0) or
                     currentPixel == (0,255,0) or
@@ -60,18 +92,26 @@ def changeRestToBlack(img):
                 pixels[x,y] = (0,0,0)
 
 
+
 # Changes pixels with a colour component above a given threshold to
 # be purely the colour component with the highest value, then
 # changes every other colour to black.
-def changeHighColors(file="jegermeister.jpg"):
+def changeHighColors(minThreshold=50, file="jegermeister.jpg"):
     img = getImage(file)
     for i in range(NUMBER_OF_COLOR_COMPONENTS):
-        changeToDominantColor(img,i)
+        changeToDominantColor(img,i,minThreshold)
     changeRestToBlack(img)
-
-    newFileName = "changeHighColours " + file
     img.show()
+    newFileName = "changeHighColours " + file
+    img.save(newFileName)
+
+def shufflePixels(file="sad.jpg"):
+    img = getImage(file)
+    getShuffledImage(img)
+    img.show()
+    newFileName = "shufflePixels " + file
     img.save(newFileName)
 
 
-changeHighColors()
+#changeHighColors()
+shufflePixels()
