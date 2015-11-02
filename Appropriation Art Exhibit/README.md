@@ -1,4 +1,4 @@
-Currently the shuffle function shuffles every single pixel, so it ends up looking like noise. I intend to limit the distance that each pixel can be moved, so that it the original picture will still be somewhat recognisable.
+Currently the shuffle function shuffles every single pixel, so it ends up looking like noise. I intend to limit the distance that each pixel can be moved, so that the original picture will still be somewhat recognisable.
 
 ##Images Used:
 
