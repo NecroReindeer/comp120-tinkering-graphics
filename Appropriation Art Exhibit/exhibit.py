@@ -7,22 +7,14 @@ from PIL import Image
 
 # The number of colour components, in this case, 3 (red, green and blue)
 NUMBER_OF_COLOR_COMPONENTS = 3
+RED = (255,0,0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+BLACK = (0, 0, 0)
 
 def getImage(file):
     img = Image.open(file)
     return img
-
-
-# Returns colour as a list so that individual elements can be changed
-def createColor(red, green, blue):
-    newColor = [red, green, blue]
-    return newColor
-
-
-# Takes colour as a list and returns it as a tuple for assignment to a pixel
-def assignColor(targetColor):
-    color = (targetColor[0], targetColor[1], targetColor[2])
-    return color
 
 
 def getWidth(img):
@@ -50,14 +42,15 @@ def getShuffledImage(img):
     newImg = img
     originalPixels = originalImg.load()
     shuffledPixels = newImg.load()
-    remainingIndices = addPixelsToList(img)
 
-    for x in range(0, getWidth(originalImg)):
-        for y in range(0, getHeight(originalImg)):
-            currentPixel = originalPixels[x,y]
-            targetIndex = random.randrange(len(remainingIndices))
-            targetPixel = remainingIndices.pop(targetIndex)
-            shuffledPixels[targetPixel[0], targetPixel[1]] = currentPixel
+    listOfPixels = addPixelsToList(img)
+    random.shuffle(listOfPixels)
+
+    for x in range(getWidth(img)):
+        for y in range(getHeight(img)):
+            pixelToMove = originalPixels[x,y]
+            targetPixel = listOfPixels.pop()
+            shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
 
 
 # Checks if the chosen colour component of a pixel is
@@ -82,15 +75,15 @@ def checkDominantColor(pixel, targetComponentIndex, minThreshold):
 # component, above a given threshold
 def changeToDominantColor(img, chosenColorIndex, minThreshold):
     pixels = img.load()
+    targetColors = [RED, GREEN, BLUE]
+
     for x in range(getWidth(img)):
         for y in range(getHeight(img)):
             currentPixel = pixels[x,y]
             canChange = checkDominantColor(currentPixel, chosenColorIndex, minThreshold)
 
             if canChange:
-                newColor = createColor(0,0,0)
-                newColor[chosenColorIndex] = 255
-                pixels[x,y] = assignColor(newColor)
+                pixels[x,y] = targetColors[chosenColorIndex]
 
 
 # Changes colour of any pixel in the image
@@ -100,10 +93,10 @@ def changeRestToBlack(img):
     for x in range(0, getWidth(img)):
         for y in range(0, getHeight(img)):
             currentPixel = pixels[x,y]
-            if not (currentPixel == (255,0,0) or
-                    currentPixel == (0,255,0) or
-                    currentPixel == (0,0,255)):
-                pixels[x,y] = (0,0,0)
+            if not (currentPixel == RED or
+                    currentPixel == GREEN or
+                    currentPixel == BLUE):
+                pixels[x,y] = BLACK
 
 
 # Changes pixels with a colour component above a given threshold to
