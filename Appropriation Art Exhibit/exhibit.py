@@ -13,13 +13,15 @@ def getImage(file):
     return img
 
 
+# Returns colour as a list so that individual elements can be changed
 def createColor(red, green, blue):
     newColor = [red, green, blue]
     return newColor
 
 
-def assignColor(color):
-    color = (color[0], color[1], color[2])
+# Takes colour as a list and returns it as a tuple for assignment to a pixel
+def assignColor(targetColor):
+    color = (targetColor[0], targetColor[1], targetColor[2])
     return color
 
 
@@ -53,7 +55,7 @@ def getShuffledImage(img):
     for x in range(0, getWidth(originalImg)):
         for y in range(0, getHeight(originalImg)):
             currentPixel = originalPixels[x,y]
-            targetIndex = random.randrange(0, len(remainingIndices))
+            targetIndex = random.randrange(len(remainingIndices))
             targetPixel = remainingIndices.pop(targetIndex)
             shuffledPixels[targetPixel[0], targetPixel[1]] = currentPixel
 
