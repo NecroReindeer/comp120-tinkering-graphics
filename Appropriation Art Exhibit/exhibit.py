@@ -71,12 +71,10 @@ def checkDominantColor(pixel, targetComponentIndex, minThreshold):
     return canChange
 
 
-# Changes colour of each pixel to the dominant colour
-# component, above a given threshold
-def changeToDominantColor(img, chosenColorIndex, minThreshold):
+# Changes colour of the dominant colour component of each pixel
+# to a specified colour, above a given threshold
+def changeDominantColor(img, chosenColorIndex, minThreshold, targetColors):
     pixels = img.load()
-    targetColors = [RED, GREEN, BLUE]
-
     for x in range(getWidth(img)):
         for y in range(getHeight(img)):
             currentPixel = pixels[x,y]
@@ -87,29 +85,30 @@ def changeToDominantColor(img, chosenColorIndex, minThreshold):
 
 
 # Changes colour of any pixel in the image
-# that isn't purely red, green or blue to black
-def changeRestToBlack(img):
+# that isn't one of the specified colours to black
+def changeRestToBlack(img, targetColors):
     pixels = img.load()
     for x in range(0, getWidth(img)):
         for y in range(0, getHeight(img)):
             currentPixel = pixels[x,y]
-            if not (currentPixel == RED or
-                    currentPixel == GREEN or
-                    currentPixel == BLUE):
+            if currentPixel not in targetColors:
                 pixels[x,y] = BLACK
 
 
 # Changes pixels with a colour component above a given threshold to
-# be purely the colour component with the highest value, then
-# changes every other colour to black.
-def emphasiseColors(minThreshold=50, file="jegermeister.jpg"):
+# a specified colour, then changes every other colour to black.
+def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
     img = getImage(file)
+    replacementForRed = (255, 0, 255)
+    replacementForGreen = (0, 255, 255)
+    replacementForBlue = (255, 255, 0)
+    targetColors = [replacementForRed, replacementForBlue, replacementForGreen]
+
     for i in range(NUMBER_OF_COLOR_COMPONENTS):
-        changeToDominantColor(img, i, minThreshold)
-    changeRestToBlack(img)
+        changeDominantColor(img, i, minThreshold, targetColors)
+
+    changeRestToBlack(img, targetColors)
     img.show()
-    newFileName = "emphasiseColors " + file
-    img.save(newFileName)
 
 
 # Randomly shuffles every single pixel in an image
@@ -117,9 +116,7 @@ def shufflePixels(file="sad.jpg"):
     img = getImage(file)
     getShuffledImage(img)
     img.show()
-    newFileName = "shufflePixels " + file
-    img.save(newFileName)
 
 
-emphasiseColors()
+replaceDominantColors()
 shufflePixels()
