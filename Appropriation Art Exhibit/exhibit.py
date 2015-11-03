@@ -7,6 +7,7 @@ from PIL import Image
 
 # The number of colour components, in this case, 3 (red, green and blue)
 NUMBER_OF_COLOR_COMPONENTS = 3
+
 RED = (255,0,0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
@@ -36,21 +37,33 @@ def addPixelsToList(img):
     return coordinates
 
 
+def getSquares(width, height, pixelCoordinates, shuffleValue):
+    pixelSquare = []
+    for x in range(pixelCoordinates[0], pixelCoordinates[0] + shuffleValue):
+        for y in range(pixelCoordinates[1], pixelCoordinates[1] + shuffleValue):
+            if x < width and y < height:
+                pixelSquare.append((x,y))
+    return pixelSquare
+
+
 # Makes a copy of the image and randomly shuffles all of its pixels
-def getShuffledImage(img):
+def getShuffledImage(img, shuffleValue):
     originalImg = img
     newImg = img
     originalPixels = originalImg.load()
     shuffledPixels = newImg.load()
+    width = getWidth(img)
+    height = getHeight(img)
 
-    listOfPixels = addPixelsToList(img)
-    random.shuffle(listOfPixels)
-
-    for x in range(getWidth(img)):
-        for y in range(getHeight(img)):
+    for x in range(width):
+        for y in range(height):
             pixelToMove = originalPixels[x,y]
-            targetPixel = listOfPixels.pop()
-            shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
+            pixelSquare = getSquares(width, height, [x,y], shuffleValue)
+            random.shuffle(pixelSquare)
+
+            if len(pixelSquare) > 0:
+              targetPixel = pixelSquare.pop()
+              shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
 
 
 # Checks if the chosen colour component of a pixel is
@@ -88,8 +101,8 @@ def changeDominantColor(img, chosenColorIndex, minThreshold, targetColors):
 # that isn't one of the specified colours to black
 def changeRestToBlack(img, targetColors):
     pixels = img.load()
-    for x in range(0, getWidth(img)):
-        for y in range(0, getHeight(img)):
+    for x in range(getWidth(img)):
+        for y in range(getHeight(img)):
             currentPixel = pixels[x,y]
             if currentPixel not in targetColors:
                 pixels[x,y] = BLACK
@@ -114,9 +127,10 @@ def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
 # Randomly shuffles every single pixel in an image
 def shufflePixels(file="sad.jpg"):
     img = getImage(file)
-    getShuffledImage(img)
+    getShuffledImage(img, 10)
     img.show()
+    img.save("bah.jpg")
 
 
-replaceDominantColors()
+#replaceDominantColors()
 shufflePixels()
