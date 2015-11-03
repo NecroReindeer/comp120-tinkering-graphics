@@ -13,6 +13,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 
+
 def getImage(file):
     img = Image.open(file)
     return img
@@ -37,17 +38,35 @@ def addPixelsToList(img):
     return coordinates
 
 
-def getSquares(width, height, pixelCoordinates, shuffleValue):
+
+# returns a random length to be used for sides of square
+def getRandomSquareSize(shuffleStep, randomness):
+    squareSize = random.randrange(shuffleStep, shuffleStep * randomness)
+    return squareSize
+
+
+# returns a list of pixel coordinates contained in a square of random size
+# surrounding a given central pixel
+def getSquare(width, height, pixelCoordinates, shuffleStep, randomness):
     pixelSquare = []
-    for x in range(pixelCoordinates[0], pixelCoordinates[0] + shuffleValue):
-        for y in range(pixelCoordinates[1], pixelCoordinates[1] + shuffleValue):
-            if x < width and y < height:
+    squareSize = getRandomSquareSize(shuffleStep, randomness)
+
+    startX = pixelCoordinates[0] - squareSize/2
+    endX =  pixelCoordinates[0] + squareSize/2
+
+    startY = pixelCoordinates[1] - squareSize/2
+    endY =  pixelCoordinates[1] + squareSize/2
+
+    for x in range(startX, endX):
+        for y in range(startY, endY):
+            if 0 < x < width and 0 < y < height:
                 pixelSquare.append((x,y))
     return pixelSquare
 
 
-# Makes a copy of the image and randomly shuffles all of its pixels
-def getShuffledImage(img, shuffleValue):
+# Makes a copy of the image and randomly shuffles its pixels with
+# nearby pixels
+def getShuffledImage(img, shuffleStep, randomness):
     originalImg = img
     newImg = img
     originalPixels = originalImg.load()
@@ -55,15 +74,25 @@ def getShuffledImage(img, shuffleValue):
     width = getWidth(img)
     height = getHeight(img)
 
-    for x in range(width):
-        for y in range(height):
-            pixelToMove = originalPixels[x,y]
-            pixelSquare = getSquares(width, height, [x,y], shuffleValue)
-            random.shuffle(pixelSquare)
+    for x in range(0, width, shuffleStep):
+        for y in range(0, height, shuffleStep):
+            currentCoordinates = [x,y]
+            pixelSquare = getSquare(width, height, currentCoordinates, shuffleStep, randomness)
+            shuffledPixelSquare = pixelSquare
+            random.shuffle(shuffledPixelSquare)
 
-            if len(pixelSquare) > 0:
-              targetPixel = pixelSquare.pop()
-              shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
+            for pixel in pixelSquare:
+                pixelToMove = originalPixels[pixel]
+                targetPixel = shuffledPixelSquare.pop()
+                shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
+
+
+# Randomly shuffles pixels in an image
+def shufflePixels(shuffleStep=10, randomness=3, file="sad.jpg"):
+    img = getImage(file)
+    getShuffledImage(img, shuffleStep, randomness)
+    img.show()
+
 
 
 # Checks if the chosen colour component of a pixel is
@@ -124,13 +153,6 @@ def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
     img.show()
 
 
-# Randomly shuffles every single pixel in an image
-def shufflePixels(file="sad.jpg"):
-    img = getImage(file)
-    getShuffledImage(img, 10)
-    img.show()
-    img.save("bah.jpg")
 
-
-#replaceDominantColors()
+replaceDominantColors()
 shufflePixels()
