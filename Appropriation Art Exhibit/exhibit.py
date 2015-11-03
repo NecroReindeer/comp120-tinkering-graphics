@@ -1,6 +1,7 @@
 __author__ = 'Harriet'
 
 import random
+import math
 
 from PIL import Image
 
@@ -29,6 +30,14 @@ def getHeight(img):
     return height
 
 
+# Returns distance between 2 pixels as a float
+def getDistance(firstPoint, secondPoint):
+    xDistance = secondPoint[0]-firstPoint[0]
+    yDistance = secondPoint[1] - firstPoint[1]
+    distance = math.sqrt(xDistance**2.0 + yDistance**2.0)
+    return distance
+
+
 # Adds the coordinates of each pixel in an image to a list
 def addPixelsToList(img):
     coordinates = []
@@ -38,6 +47,24 @@ def addPixelsToList(img):
     return coordinates
 
 
+# Returns a list of pixel coordinates contained in a square of
+# specified size around a central point
+def getSquare(img, centre, width, height):
+    pixelSquare = []
+
+    startX = centre[0] - width/2
+    endX =  centre[0] + width/2
+
+    startY = centre[1] - height/2
+    endY = centre[1] + height/2
+
+    for x in range(startX, endX):
+        for y in range(startY, endY):
+            if 0 < x < getWidth(img) and 0 < y < getHeight(img):
+                pixelSquare.append((x,y))
+    return pixelSquare
+
+
 
 # returns a random length to be used for sides of square
 def getRandomSquareSize(shuffleStep, randomness):
@@ -45,46 +72,27 @@ def getRandomSquareSize(shuffleStep, randomness):
     return squareSize
 
 
-# returns a list of pixel coordinates contained in a square of random size
-# surrounding a given central pixel
-def getSquare(width, height, pixelCoordinates, shuffleStep, randomness):
-    pixelSquare = []
-    squareSize = getRandomSquareSize(shuffleStep, randomness)
-
-    startX = pixelCoordinates[0] - squareSize/2
-    endX =  pixelCoordinates[0] + squareSize/2
-
-    startY = pixelCoordinates[1] - squareSize/2
-    endY =  pixelCoordinates[1] + squareSize/2
-
-    for x in range(startX, endX):
-        for y in range(startY, endY):
-            if 0 < x < width and 0 < y < height:
-                pixelSquare.append((x,y))
-    return pixelSquare
-
-
 # Makes a copy of the image and randomly shuffles its pixels with
 # nearby pixels
 def getShuffledImage(img, shuffleStep, randomness):
-    originalImg = img
-    newImg = img
+    originalImg = img.copy()
     originalPixels = originalImg.load()
-    shuffledPixels = newImg.load()
+    shuffledPixels = img.load()
     width = getWidth(img)
     height = getHeight(img)
 
     for x in range(0, width, shuffleStep):
         for y in range(0, height, shuffleStep):
             currentCoordinates = [x,y]
-            pixelSquare = getSquare(width, height, currentCoordinates, shuffleStep, randomness)
+            squareSize = getRandomSquareSize(shuffleStep, randomness)
+            pixelSquare = getSquare(originalImg, currentCoordinates, squareSize, squareSize)
             shuffledPixelSquare = pixelSquare
             random.shuffle(shuffledPixelSquare)
 
             for pixel in pixelSquare:
                 pixelToMove = originalPixels[pixel]
-                targetPixel = shuffledPixelSquare.pop()
-                shuffledPixels[targetPixel[0], targetPixel[1]] = pixelToMove
+                pixelToBeReplaced = shuffledPixelSquare.pop()
+                shuffledPixels[pixelToBeReplaced[0], pixelToBeReplaced[1]] = pixelToMove
 
 
 # Randomly shuffles pixels in an image
@@ -154,5 +162,30 @@ def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
 
 
 
+
+
+
+
+def drawCircles(file="glasses swap.jpg"):
+    img = getImage(file)
+    pixels = img.load()
+    radius = 7
+    gap = 7
+    for x in range(0, getWidth(img), radius+gap):
+        for y in range(0, getHeight(img), radius+gap):
+            centre = [x, y]
+            container = getSquare(img, centre, radius*2, radius*2)
+            centreColor = pixels[x, y]
+
+            for p in container:
+                distanceFromCentre = getDistance(p, centre)
+                if distanceFromCentre < radius:
+                    pixels[p] = centreColor
+                else:
+                    pixels[p] = (0, 0, 0)
+    img.show()
+
+
 replaceDominantColors()
 shufflePixels()
+drawCircles()
