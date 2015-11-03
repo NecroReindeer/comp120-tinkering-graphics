@@ -66,7 +66,9 @@ def getSquare(img, centre, width, height):
 
 
 
-# returns a random length to be used for sides of square
+# Returns a random length to be used for sides of square.
+# Squares are random size so that the picture looks less
+# uniform and grid-like
 def getRandomSquareSize(shuffleStep, randomness):
     squareSize = random.randrange(shuffleStep, shuffleStep * randomness)
     return squareSize
@@ -162,30 +164,35 @@ def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
 
 
 
-
-
-
-
-def drawCircles(file="glasses swap.jpg"):
+# Converts an image to be made up of circles of a given radius with
+# the colour of the pixel at the centre of the circle
+def convertToDots(radius=10, gap=5, background = BLACK, file="hug.png"):
     img = getImage(file)
     pixels = img.load()
-    radius = 7
-    gap = 7
-    for x in range(0, getWidth(img), radius+gap):
-        for y in range(0, getHeight(img), radius+gap):
+    diameter = 2 * radius
+
+    if (diameter + gap) % 2 != 0:                                           #To account for rounding errors with ints
+        squareSize = diameter + gap + 1
+    else:
+        squareSize = diameter + gap
+
+    firstCircleCentre = squareSize/2                                        # So circles on top edge are fully visible
+
+    for x in range(firstCircleCentre, getWidth(img), diameter + gap):
+        for y in range(firstCircleCentre, getHeight(img), diameter + gap):
             centre = [x, y]
-            container = getSquare(img, centre, radius*2, radius*2)
+            box = getSquare(img, centre, squareSize, squareSize)
             centreColor = pixels[x, y]
 
-            for p in container:
+            for p in box:
                 distanceFromCentre = getDistance(p, centre)
-                if distanceFromCentre < radius:
-                    pixels[p] = centreColor
+                if distanceFromCentre < radius:                             # Because every point on circumference of
+                    pixels[p] = centreColor                                 # circle is equal distance from the centre
                 else:
-                    pixels[p] = (0, 0, 0)
+                    pixels[p] = background
     img.show()
 
 
 replaceDominantColors()
 shufflePixels()
-drawCircles()
+convertToDots()
