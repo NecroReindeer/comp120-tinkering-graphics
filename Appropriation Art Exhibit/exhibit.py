@@ -14,6 +14,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 
+
 # Returns distance between 2 coordinates as a float
 def getDistance(firstPoint, secondPoint):
     xDistance = secondPoint[0] - firstPoint[0]
@@ -30,7 +31,7 @@ def showGallery():
 
     sadPainting = Painting("sad.jpg")
     shuffleEffect = ShuffleEffect(10, 3)
-    shuffleEffect.getShuffledImage(sadPainting)
+    shuffleEffect.shuffleImage(sadPainting)
     sadPainting.show()
 
     newColors = [(255, 0, 255),
@@ -44,23 +45,42 @@ def showGallery():
 
 
 class Painting():
-    def __init__(self, file):
-        self.file = file
-        self.img = Image.open(file)
+    def __init__(self, img):
+        if isinstance(img, str):
+            self.img = Image.open(img)
+        else:
+            self.img = img
         self.pixels = self.img.load()
-        self.width = self.img.size[0]
-        self.height = self.img.size[1]
+        self.width, self.height = self.img.size
+        self.mode = self.img.mode
 
+    @property
+    def img(self):
+        return self.img
+
+    @img.setter
+    def img(self, newImg):
+        self.img = newImg
+        self.pixels = self.img.load
+        self.width, self.height = self.img.size
+        self.mode = self.img.mode
 
     def show(self):
         self.img.show()
 
-
     def copy(self):
-        copy = Painting(self.file)
-        copy.img = self.img
+        copy = self.img.copy()
         return copy
 
+    def setPixel(self, coordinates, color):
+        self.pixels[coordinates] = color
+
+    def getPixel(self, coordinates):
+        return self.pixels[coordinates]
+
+    def clearImage(self, color):
+        newImage = Image.new(self.mode, (self.width, self.height), color)
+        self.img = newImage
 
     # Returns a list of pixel coordinates contained in a square of
     # specified size around a central point
@@ -68,7 +88,7 @@ class Painting():
         pixelSquare = []
 
         startX = centre[0] - width/2
-        endX =  centre[0] + width/2
+        endX = centre[0] + width/2
 
         startY = centre[1] - height/2
         endY = centre[1] + height/2
@@ -78,7 +98,6 @@ class Painting():
                 if 0 < x < self.width and 0 < y < self.height:
                     pixelSquare.append((x,y))
         return pixelSquare
-
 
 
 class DotEffect():
@@ -95,20 +114,22 @@ class DotEffect():
             squareSize = self.diameter + self.gap + 1
         else:
             squareSize = self.diameter + self.gap
-        firstCircleCentre = squareSize/2                                    # So circles on top edge are fully visible
+        firstCircleCentre = squareSize / 2                                  # So circles on top edge are fully visible
+
+        canvas = Image.new(painting.mode, (painting.width, painting.height), self.background)
+        canvas = Painting(canvas)
 
         for x in range(firstCircleCentre, painting.width, squareSize):
             for y in range(firstCircleCentre, painting.height, squareSize):
-                centre = [x, y]
+                centre = x, y
                 box = painting.getSquare(centre, squareSize, squareSize)
-                centreColor = painting.pixels[x, y]
+                centreColor = painting.getPixel(centre)
 
                 for pixel in box:
                     distanceFromCentre = getDistance(pixel, centre)
                     if distanceFromCentre < self.radius:                    # Because every point on circumference
-                        painting.pixels[pixel] = centreColor                # of circle is equal distance from the
-                    else:                                                   # centre
-                        painting.pixels[pixel] = self.background
+                        canvas.setPixel(pixel, centreColor)                 # of circle is equal distance from the
+        painting.img = canvas.img                                           # centre
 
 
 class ShuffleEffect():
@@ -126,12 +147,11 @@ class ShuffleEffect():
 
     # Makes a copy of the image and randomly shuffles its pixels with
     # nearby pixels
-    def getShuffledImage(self, painting):
-        originalPainting = painting.copy()
-
+    def shuffleImage(self, painting):
+        originalPainting = Painting(painting.copy())
         for x in range(0, painting.width, self.shuffleStep):
             for y in range(0, painting.height, self.shuffleStep):
-                currentCoordinates = [x,y]
+                currentCoordinates = (x,y)
                 squareSize = self.getRandomSquareSize()
                 pixelSquare = originalPainting.getSquare(currentCoordinates,
                                                          squareSize, squareSize)
@@ -139,9 +159,9 @@ class ShuffleEffect():
                 random.shuffle(shuffledPixelSquare)
 
                 for pixel in pixelSquare:
-                    pixelToMove = originalPainting.pixels[pixel]
+                    pixelToMove = originalPainting.getPixel(pixel)
                     pixelToBeReplaced = shuffledPixelSquare.pop()
-                    painting.pixels[pixelToBeReplaced[0], pixelToBeReplaced[1]] = pixelToMove
+                    painting.setPixel(pixelToBeReplaced, pixelToMove)
 
 
 class ThreeColorEffect():
@@ -179,21 +199,23 @@ class ThreeColorEffect():
 
         for x in range(painting.width):
             for y in range(painting.height):
-                currentPixel = painting.pixels[x,y]
+                currentCoordinate = x, y
+                currentPixel = painting.getPixel(currentCoordinate)
                 canChange = self.checkDominantColor(currentPixel,
                                                     chosenColorIndex, self.threshold)
 
                 if canChange:
-                    painting.pixels[x,y] = self.replacementColors[chosenColorIndex]
+                    painting.setPixel(currentCoordinate, self.replacementColors[chosenColorIndex])
 
     # Changes colour of any pixel in the image
     # that isn't one of the specified colours to black
     def changeRestToBlack(self, painting):
         for x in range(painting.width):
             for y in range(painting.height):
-                currentPixel = painting.pixels[x,y]
+                currentCoordinate = x, y
+                currentPixel = painting.getPixel(currentCoordinate)
                 if currentPixel not in self.replacementColors:
-                    painting.pixels[x,y] = BLACK
+                    painting.setPixel(currentCoordinate, BLACK)
 
 
 showGallery()
