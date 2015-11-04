@@ -14,185 +14,186 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 
-
-def getImage(file):
-    img = Image.open(file)
-    return img
-
-
-def getWidth(img):
-    width = img.size[0]
-    return width
-
-
-def getHeight(img):
-    height = img.size[1]
-    return height
-
-
-# Returns distance between 2 pixels as a float
+# Returns distance between 2 coordinates as a float
 def getDistance(firstPoint, secondPoint):
-    xDistance = secondPoint[0]-firstPoint[0]
+    xDistance = secondPoint[0] - firstPoint[0]
     yDistance = secondPoint[1] - firstPoint[1]
     distance = math.sqrt(xDistance**2.0 + yDistance**2.0)
     return distance
 
+def showGallery():
 
-# Adds the coordinates of each pixel in an image to a list
-def addPixelsToList(img):
-    coordinates = []
-    for x in range(0, getWidth(img)):
-        for y in range(0, getHeight(img)):
-            coordinates.append((x,y))
-    return coordinates
+    hugPainting = Painting("hug.png")
+    dotEffect = DotEffect( 10, 5, BLACK)
+    dotEffect.convertToDots(hugPainting)
+    hugPainting.show()
 
+    sadPainting = Painting("sad.jpg")
+    shuffleEffect = ShuffleEffect(10, 3)
+    shuffleEffect.getShuffledImage(sadPainting)
+    sadPainting.show()
 
-# Returns a list of pixel coordinates contained in a square of
-# specified size around a central point
-def getSquare(img, centre, width, height):
-    pixelSquare = []
+    newColors = [(255, 0, 255),
+                 (255, 255, 0),
+                 (0, 255, 255)]
 
-    startX = centre[0] - width/2
-    endX =  centre[0] + width/2
-
-    startY = centre[1] - height/2
-    endY = centre[1] + height/2
-
-    for x in range(startX, endX):
-        for y in range(startY, endY):
-            if 0 < x < getWidth(img) and 0 < y < getHeight(img):
-                pixelSquare.append((x,y))
-    return pixelSquare
+    jegermeisterPainting = Painting("jegermeister.jpg")
+    colorChangeEffect = ThreeColorEffect(50, newColors)
+    colorChangeEffect.replaceDominantColors(jegermeisterPainting)
+    jegermeisterPainting.show()
 
 
-
-# Returns a random length to be used for sides of square.
-# Squares are random size so that the picture looks less
-# uniform and grid-like
-def getRandomSquareSize(shuffleStep, randomness):
-    squareSize = random.randrange(shuffleStep, shuffleStep * randomness)
-    return squareSize
-
-
-# Makes a copy of the image and randomly shuffles its pixels with
-# nearby pixels
-def getShuffledImage(img, shuffleStep, randomness):
-    originalImg = img.copy()
-    originalPixels = originalImg.load()
-    shuffledPixels = img.load()
-    width = getWidth(img)
-    height = getHeight(img)
-
-    for x in range(0, width, shuffleStep):
-        for y in range(0, height, shuffleStep):
-            currentCoordinates = [x,y]
-            squareSize = getRandomSquareSize(shuffleStep, randomness)
-            pixelSquare = getSquare(originalImg, currentCoordinates, squareSize, squareSize)
-            shuffledPixelSquare = pixelSquare
-            random.shuffle(shuffledPixelSquare)
-
-            for pixel in pixelSquare:
-                pixelToMove = originalPixels[pixel]
-                pixelToBeReplaced = shuffledPixelSquare.pop()
-                shuffledPixels[pixelToBeReplaced[0], pixelToBeReplaced[1]] = pixelToMove
+class Painting():
+    def __init__(self, file):
+        self.file = file
+        self.img = Image.open(file)
+        self.pixels = self.img.load()
+        self.width = self.img.size[0]
+        self.height = self.img.size[1]
 
 
-# Randomly shuffles pixels in an image
-def shufflePixels(shuffleStep=10, randomness=3, file="sad.jpg"):
-    img = getImage(file)
-    getShuffledImage(img, shuffleStep, randomness)
-    img.show()
+    def show(self):
+        self.img.show()
+
+
+    def copy(self):
+        copy = Painting(self.file)
+        copy.img = self.img
+        return copy
+
+
+    # Returns a list of pixel coordinates contained in a square of
+    # specified size around a central point
+    def getSquare(self, centre, width, height):
+        pixelSquare = []
+
+        startX = centre[0] - width/2
+        endX =  centre[0] + width/2
+
+        startY = centre[1] - height/2
+        endY = centre[1] + height/2
+
+        for x in range(startX, endX):
+            for y in range(startY, endY):
+                if 0 < x < self.width and 0 < y < self.height:
+                    pixelSquare.append((x,y))
+        return pixelSquare
 
 
 
-# Checks if the chosen colour component of a pixel is
-# greater than the other two components and above
-# the given minimum threshold
-def checkDominantColor(pixel, targetComponentIndex, minThreshold):
-    canChange = True
-    for componentIndex in range(NUMBER_OF_COLOR_COMPONENTS):
-        currentComponentValue = pixel[componentIndex]
-        componentBeingChecked = pixel[targetComponentIndex]
+class DotEffect():
+    def __init__(self, radius, gap, background):
+        self.radius = radius
+        self.diameter = self.radius * 2
+        self.gap = gap
+        self.background = background
 
-        if componentIndex != targetComponentIndex:
-            if (currentComponentValue >= componentBeingChecked * 0.9):
+    # Converts an image to be made up of circles of a given radius with
+    # the colour of the pixel at the centre of the circle
+    def convertToDots(self, painting):
+        if (self.diameter + self.gap) % 2 != 0:                             #To account for rounding errors with ints
+            squareSize = self.diameter + self.gap + 1
+        else:
+            squareSize = self.diameter + self.gap
+        firstCircleCentre = squareSize/2                                    # So circles on top edge are fully visible
+
+        for x in range(firstCircleCentre, painting.width, squareSize):
+            for y in range(firstCircleCentre, painting.height, squareSize):
+                centre = [x, y]
+                box = painting.getSquare(centre, squareSize, squareSize)
+                centreColor = painting.pixels[x, y]
+
+                for pixel in box:
+                    distanceFromCentre = getDistance(pixel, centre)
+                    if distanceFromCentre < self.radius:                    # Because every point on circumference
+                        painting.pixels[pixel] = centreColor                # of circle is equal distance from the
+                    else:                                                   # centre
+                        painting.pixels[pixel] = self.background
+
+
+class ShuffleEffect():
+    def __init__(self, shuffleStep, randomness):
+        self.shuffleStep = shuffleStep
+        self.randomness = randomness
+
+    # Returns a random length to be used for sides of square.
+    # Squares are random size so that the picture looks less
+    # uniform and grid-like
+    def getRandomSquareSize(self):
+        squareSize = random.randrange(self.shuffleStep,
+                                      self.shuffleStep * self.randomness)
+        return squareSize
+
+    # Makes a copy of the image and randomly shuffles its pixels with
+    # nearby pixels
+    def getShuffledImage(self, painting):
+        originalPainting = painting.copy()
+
+        for x in range(0, painting.width, self.shuffleStep):
+            for y in range(0, painting.height, self.shuffleStep):
+                currentCoordinates = [x,y]
+                squareSize = self.getRandomSquareSize()
+                pixelSquare = originalPainting.getSquare(currentCoordinates,
+                                                         squareSize, squareSize)
+                shuffledPixelSquare = pixelSquare
+                random.shuffle(shuffledPixelSquare)
+
+                for pixel in pixelSquare:
+                    pixelToMove = originalPainting.pixels[pixel]
+                    pixelToBeReplaced = shuffledPixelSquare.pop()
+                    painting.pixels[pixelToBeReplaced[0], pixelToBeReplaced[1]] = pixelToMove
+
+
+class ThreeColorEffect():
+    def __init__(self, threshold, replacementColors):
+        self.threshold = threshold
+        self.replacementColors = replacementColors
+
+    # Changes pixels with a colour component above a given threshold to
+    # a specified colour, then changes every other colour to black.
+    def replaceDominantColors(self, painting):
+
+        for i in range(NUMBER_OF_COLOR_COMPONENTS):
+            self.changeDominantColor(i, painting)
+        self.changeRestToBlack(painting)
+
+    # Checks if the chosen colour component of a pixel is
+    # greater than the other two components and above
+    # the given minimum threshold
+    def checkDominantColor(self, pixel, targetComponentIndex, minThreshold):
+        canChange = True
+        for componentIndex in range(NUMBER_OF_COLOR_COMPONENTS):
+            currentComponentValue = pixel[componentIndex]
+            componentBeingChecked = pixel[targetComponentIndex]
+
+            if componentIndex != targetComponentIndex:
+                if (currentComponentValue >= componentBeingChecked * 0.9):
+                    canChange = False
+            elif currentComponentValue <= minThreshold:
                 canChange = False
-        elif currentComponentValue <= minThreshold:
-            canChange = False
+        return canChange
 
-    return canChange
+    # Changes colour of the dominant colour component of each pixel
+    # to a specified colour, above a given threshold
+    def changeDominantColor(self, chosenColorIndex, painting):
 
+        for x in range(painting.width):
+            for y in range(painting.height):
+                currentPixel = painting.pixels[x,y]
+                canChange = self.checkDominantColor(currentPixel,
+                                                    chosenColorIndex, self.threshold)
 
-# Changes colour of the dominant colour component of each pixel
-# to a specified colour, above a given threshold
-def changeDominantColor(img, chosenColorIndex, minThreshold, targetColors):
-    pixels = img.load()
-    for x in range(getWidth(img)):
-        for y in range(getHeight(img)):
-            currentPixel = pixels[x,y]
-            canChange = checkDominantColor(currentPixel, chosenColorIndex, minThreshold)
+                if canChange:
+                    painting.pixels[x,y] = self.replacementColors[chosenColorIndex]
 
-            if canChange:
-                pixels[x,y] = targetColors[chosenColorIndex]
-
-
-# Changes colour of any pixel in the image
-# that isn't one of the specified colours to black
-def changeRestToBlack(img, targetColors):
-    pixels = img.load()
-    for x in range(getWidth(img)):
-        for y in range(getHeight(img)):
-            currentPixel = pixels[x,y]
-            if currentPixel not in targetColors:
-                pixels[x,y] = BLACK
+    # Changes colour of any pixel in the image
+    # that isn't one of the specified colours to black
+    def changeRestToBlack(self, painting):
+        for x in range(painting.width):
+            for y in range(painting.height):
+                currentPixel = painting.pixels[x,y]
+                if currentPixel not in self.replacementColors:
+                    painting.pixels[x,y] = BLACK
 
 
-# Changes pixels with a colour component above a given threshold to
-# a specified colour, then changes every other colour to black.
-def replaceDominantColors(minThreshold=50, file="jegermeister.jpg"):
-    img = getImage(file)
-    replacementForRed = (255, 0, 255)
-    replacementForGreen = (0, 255, 255)
-    replacementForBlue = (255, 255, 0)
-    targetColors = [replacementForRed, replacementForBlue, replacementForGreen]
-
-    for i in range(NUMBER_OF_COLOR_COMPONENTS):
-        changeDominantColor(img, i, minThreshold, targetColors)
-
-    changeRestToBlack(img, targetColors)
-    img.show()
-
-
-
-# Converts an image to be made up of circles of a given radius with
-# the colour of the pixel at the centre of the circle
-def convertToDots(radius=10, gap=5, background = BLACK, file="hug.png"):
-    img = getImage(file)
-    pixels = img.load()
-    diameter = 2 * radius
-
-    if (diameter + gap) % 2 != 0:                                           #To account for rounding errors with ints
-        squareSize = diameter + gap + 1
-    else:
-        squareSize = diameter + gap
-
-    firstCircleCentre = squareSize/2                                        # So circles on top edge are fully visible
-
-    for x in range(firstCircleCentre, getWidth(img), diameter + gap):
-        for y in range(firstCircleCentre, getHeight(img), diameter + gap):
-            centre = [x, y]
-            box = getSquare(img, centre, squareSize, squareSize)
-            centreColor = pixels[x, y]
-
-            for p in box:
-                distanceFromCentre = getDistance(p, centre)
-                if distanceFromCentre < radius:                             # Because every point on circumference of
-                    pixels[p] = centreColor                                 # circle is equal distance from the centre
-                else:
-                    pixels[p] = background
-    img.show()
-
-
-replaceDominantColors()
-shufflePixels()
-convertToDots()
+showGallery()
