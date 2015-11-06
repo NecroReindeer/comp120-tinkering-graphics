@@ -18,6 +18,7 @@ BLACK = (0, 0, 0)
 
 def get_distance(first_point, second_point):
     """Return distance between 2 coordinates as a float
+
     Arguments:
     first_point -- first coordinate tuple
     second_point -- second coordinate tuple
@@ -52,8 +53,7 @@ def show_gallery():
 
 
 class Painting():
-    """
-    Store image data so that variables for the data do not
+    """Store image data so that variables for the data do not
     need to be defined/passed in/to every function that uses them.
     """
 
@@ -62,30 +62,32 @@ class Painting():
             self.img = Image.open(img)
         else:
             self.img = img
-        self.pixels = self.img.load()
-        self.width, self.height = self.img.size
-        self.mode = self.img.mode
 
     @property
-    def img(self):
-        return self.img
+    def pixels(self):
+        return self.img.load()
 
-    @img.setter
-    def img(self, newImg):
-        """Ensure that image data variables are updated if img is changed"""
-        self.img = newImg
-        self.pixels = self.img.load
-        self.width, self.height = self.img.size
-        self.mode = self.img.mode
+    @property
+    def width(self):
+        return self.img.size[0]
+
+    @property
+    def height(self):
+        return self.img.size[1]
+
+    @property
+    def mode(self):
+        return self.img.mode
 
     def show(self):
         """Show the image in default image viewer"""
         self.img.show()
 
     def copy(self):
-        """Copy the image and return the copied image"""
-        copy = self.img.copy()
-        return copy
+        """Return a copy of the Painting instance"""
+        img_copy = self.img.copy()
+        painting_copy = Painting(img_copy)
+        return painting_copy
 
     def set_pixel(self, coordinates, color):
         """Set pixel at coordinates to color passed in as tuple"""
@@ -95,9 +97,10 @@ class Painting():
         """Return the color of the pixel at coordinates as a tuple"""
         return self.pixels[coordinates]
 
-    def clearImage(self, color):
-        newImage = Image.new(self.mode, (self.width, self.height), color)
-        self.img = newImage
+    def clear_image(self, color):
+        """Set image to a single color"""
+        blank_img = Image.new(self.mode, (self.width, self.height), color)
+        self.img = blank_img
 
     def get_square(self, centre, width, height):
         """Return a list of pixel coordinates contained in a square
@@ -141,11 +144,6 @@ class DotEffect():
             squaresize = self.diameter + self.gap
         return squaresize
 
-    def make_canvas(self, painting):
-        canvas = Image.new(painting.mode, (painting.width, painting.height), self.background)
-        canvas = Painting(canvas)
-        return canvas
-
     def draw_circles(self, canvas, pixels, centre, color):
         for pixel in pixels:
             distance_from_centre = get_distance(pixel, centre)         # Because every point on the circumference of a
@@ -159,8 +157,8 @@ class DotEffect():
         """
         squaresize = self.get_squaresize()
         first_centre = squaresize / 2                                  # So circles on top edge are fully visible
-
-        canvas = self.make_canvas(painting)
+        canvas = painting.copy()
+        canvas.clear_image(self.background)
 
         for x in range(first_centre, painting.width, squaresize):
             for y in range(first_centre, painting.height, squaresize):
@@ -188,7 +186,7 @@ class ShuffleEffect():
 
     def shuffle_image(self, painting):
         """Swap each pixel in an image with a random nearby pixel"""
-        original_painting = Painting(painting.copy())
+        original_painting = painting.copy()
         for x in range(0, painting.width, self.shuffle_step):
             for y in range(0, painting.height, self.shuffle_step):
                 current_coordinate = (x,y)
