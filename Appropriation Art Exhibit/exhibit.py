@@ -33,12 +33,16 @@ def show_gallery():
     input_dir = "source-images"
     output_dir = "output-images"
 
-    file = "glasses.jpg"
-    color = (100, 0, 100)
-    painting = Painting(file)
-    tile_effect = TileEffect(color, 3)
-    tile_effect.color_posterise(painting)
-    painting.show()
+    file = "alf.png"
+    colors = [(150, 0, 150),
+              (150, 150, 0),
+              (0, 150, 0),
+              (0, 150, 150)]
+    dog_painting = Painting(os.path.join(input_dir, file))
+    tile_effect = TileEffect(colors, 6, 2)
+    tile_effect.color_tile(dog_painting)
+    dog_painting.show()
+    dog_painting.save(os.path.join(output_dir, file))
 
     file = "hug.png"
     hug_painting = Painting(os.path.join(input_dir, file))
@@ -179,6 +183,14 @@ class Painting():
     def save(self, path):
         """Save the image in the location specified by path (path is a string)"""
         self.img.save(path)
+
+    def paste(self, img, box):
+        self.img.paste(img, box)
+
+    def resize(self, size):
+        resized_img = self.img.resize(size)
+        new_painting = Painting(resized_img)
+        return new_painting
 
     def set_pixel(self, coordinates, color):
         """Set pixel at coordinates to color passed in as tuple"""
@@ -362,43 +374,74 @@ class ThreeColorEffect():
 
 
 class TileEffect:
-    def __init__(self, color, levels):
+    def __init__(self, colors, levels, size):
         """Initialise the color the posterisation will be based on,
         and the level of posterisation
         """
-        self.color = color
+        self.colors = colors
         self.levels = levels
+        self.size = size
+
+    def color_tile(self, painting):
+        paintings = self.color_posterise(painting)
+        new_painting = self.tile_images(paintings)
+        painting.img = new_painting.img
 
     def color_posterise(self, painting):
-        target_color = Color(self.color)
-        for x in range(painting.width):
-            for y in range(painting.height):
-                current_coordinate = x, y
-                current_pixel = painting.pixels[current_coordinate]
-                current_color = Color(current_pixel)
-                lum_step = 255.0 / self.levels
-                difference = 255 / self.levels
+        paintings = []
+        for color in self.colors:
+            new_painting = painting.copy()
+            target_color = Color(color)
+            for x in range(painting.width):
+                for y in range(painting.height):
+                    current_coordinate = x, y
+                    current_pixel = new_painting.pixels[current_coordinate]
+                    current_color = Color(current_pixel)
+                    lum_step = 255.0 / self.levels
+                    difference = 255 / self.levels
 
-                if current_color.luminance <= lum_step:
-                    new_color = target_color.get_color()
-                    painting.set_pixel(current_coordinate, new_color)
-                else:
-                    lum = lum_step
-                    next_lum = lum + lum_step
-                    iterations = 1
+                    if current_color.luminance <= lum_step:
+                        new_color = target_color.get_color()
+                        new_painting.set_pixel(current_coordinate, new_color)
+                    else:
+                        lum = lum_step
+                        next_lum = lum + lum_step
+                        iterations = 1
 
-                    while lum < 255:
-                        if lum < current_color.luminance <= next_lum:
-                            target_color.set_color(target_color + (difference * iterations))
-                            new_color = target_color.get_color()
-                            painting.set_pixel(current_coordinate, new_color)
-                            break
-                        else:
-                            lum = next_lum
-                            next_lum = lum + lum_step
-                            iterations += 1
+                        while lum < 255:
+                            if lum < current_color.luminance <= next_lum:
+                                target_color.set_color(target_color + (difference * iterations))
+                                new_color = target_color.get_color()
+                                new_painting.set_pixel(current_coordinate, new_color)
+                                break
+                            else:
+                                lum = next_lum
+                                next_lum = lum + lum_step
+                                iterations += 1
+                    target_color.set_color(color)
+            paintings.append(new_painting)
+        return paintings
 
-                target_color.set_color(self.color)
+    def get_tile_size(self, painting):
+        tile_width = painting.width / self.size
+        tile_height = painting.height / self.size
+        return (tile_width, tile_height)
 
+    def tile_images(self, paintings):
+        index = 0
+        current_painting = paintings[index]
+        tile_size = self.get_tile_size(current_painting)
+        canvas_size = current_painting.width, current_painting.height
+        canvas = Painting(Image.new(current_painting.mode, canvas_size))
+        tile = current_painting.resize(tile_size)
+
+        for x in range(0, canvas.width, tile.width):
+            for y in range(0, canvas.height, tile.height):
+                coordinates = x, y
+                canvas.paste(tile.img, coordinates)
+                index += 1
+                current_painting = paintings[index % len(paintings)]
+                tile = current_painting.resize(tile_size)
+        return canvas
 
 show_gallery()
