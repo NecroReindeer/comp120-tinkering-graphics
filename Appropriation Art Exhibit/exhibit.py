@@ -30,26 +30,112 @@ def get_distance(first_point, second_point):
 
 
 def show_gallery():
-    directory = "source-images"
+    input_dir = "source-images"
+    output_dir = "output-images"
 
-    hug_painting = Painting(os.path.join(directory, "hug.png"))
+    file = "glasses.jpg"
+    color = (100, 0, 100)
+    painting = Painting(file)
+    tile_effect = TileEffect(color, 3)
+    tile_effect.color_posterise(painting)
+    painting.show()
+
+    file = "hug.png"
+    hug_painting = Painting(os.path.join(input_dir, file))
     dot_effect = DotEffect(10, 5, BLACK)
     dot_effect.convert_to_dots(hug_painting)
     hug_painting.show()
+    hug_painting.save(os.path.join(output_dir, file))
 
-    sad_painting = Painting(os.path.join(directory, "sad.jpg"))
+    file = "sad.jpg"
+    sad_painting = Painting(os.path.join(input_dir, file))
     shuffle_effect = ShuffleEffect(10, 3)
     shuffle_effect.shuffle_image(sad_painting)
     sad_painting.show()
+    sad_painting.save(os.path.join(output_dir, file))
 
+    file = "jegermeister.jpg"
     new_colors = [(255, 0, 255),
                  (255, 255, 0),
                  (0, 255, 255)]
-
-    jeger_painting = Painting(os.path.join(directory, "jegermeister.jpg"))
+    jeger_painting = Painting(os.path.join(input_dir, file))
     colorchange_effect = ThreeColorEffect(50, 0.9, new_colors)
     colorchange_effect.replace_dominant_colors(jeger_painting)
     jeger_painting.show()
+    jeger_painting.save(os.path.join(output_dir, file))
+
+
+class Color():
+    def __init__(self, color):
+        self.color = list(color)
+
+    @property
+    def red(self):
+        """Red component as an integer"""
+        return self.color[0]
+
+    @property
+    def green(self):
+        """Green component as an integer"""
+        return self.color[1]
+
+    @property
+    def blue(self):
+        """Blue component as an integer"""
+        return self.color[2]
+
+    @property
+    def luminance(self):
+        luminance = (self.red + self.blue + self.green)/3
+        return luminance
+
+    def __add__(self, other):
+        if isinstance(other, int):
+            red = self.red + other
+            green = self.green + other
+            blue = self.blue + other
+            self.color = [red, green, blue]
+            return self.color
+        if isinstance(other, tuple):
+            red = self.red + other[0]
+            green = self.green + other[1]
+            blue = self.blue + other[2]
+            self.color = [red, green, blue]
+            return self.color
+
+    def __sub__(self, other):
+        if isinstance(other, int):
+            red = self.red - other
+            green = self.green - other
+            blue = self.blue - other
+            self.color = [red, green, blue]
+            return self.color
+        if isinstance(other, tuple):
+            red = self.red - other[0]
+            green = self.green - other[1]
+            blue = self.blue - other[2]
+            self.color = [red, green, blue]
+            return self.color
+
+    def __mul__(self, other):
+        if isinstance(other, int):
+            red = self.red * other
+            green = self.green * other
+            blue = self.blue * other
+            self.color = [red, green, blue]
+            return self.color
+        if isinstance(other, tuple):
+            red = self.red * other[0]
+            green = self.green * other[1]
+            blue = self.blue * other[2]
+            self.color = [red, green, blue]
+            return self.color
+
+    def get_color(self):
+        return tuple(self.color)
+
+    def set_color(self, color):
+        self.color = color
 
 
 class Painting():
@@ -58,6 +144,7 @@ class Painting():
     """
 
     def __init__(self, img):
+        """Takes an object instance of type Image or a string"""
         if isinstance(img, str):
             self.img = Image.open(img)
         else:
@@ -89,6 +176,10 @@ class Painting():
         painting_copy = Painting(img_copy)
         return painting_copy
 
+    def save(self, path):
+        """Save the image in the location specified by path (path is a string)"""
+        self.img.save(path)
+
     def set_pixel(self, coordinates, color):
         """Set pixel at coordinates to color passed in as tuple"""
         self.pixels[coordinates] = color
@@ -98,7 +189,7 @@ class Painting():
         return self.pixels[coordinates]
 
     def clear_image(self, color):
-        """Set image to a single color"""
+        """Set image to a single color from a tuple"""
         blank_img = Image.new(self.mode, (self.width, self.height), color)
         self.img = blank_img
 
@@ -144,7 +235,15 @@ class DotEffect():
             squaresize = self.diameter + self.gap
         return squaresize
 
-    def draw_circles(self, canvas, pixels, centre, color):
+    def draw_circle(self, canvas, pixels, centre, color):
+        """Draw a circle
+
+        Arguments:
+        canvas -- Painting instance that the circles will be drawn on
+        pixels -- List of pixel coordinates that will be checked
+        centre -- Tuple containing coordinates of the centre of the circle
+        color -- Tuple containing color component values for color of circle
+        """
         for pixel in pixels:
             distance_from_centre = get_distance(pixel, centre)         # Because every point on the circumference of a
             if distance_from_centre < self.radius:                     # circle is equal distance from the centre
@@ -165,7 +264,7 @@ class DotEffect():
                 centre = x, y
                 pixel_square = painting.get_square(centre, squaresize, squaresize)
                 centre_color = painting.get_pixel(centre)
-                self.draw_circles(canvas, pixel_square, centre, centre_color)
+                self.draw_circle(canvas, pixel_square, centre, centre_color)
         painting.img = canvas.img
 
 
@@ -263,8 +362,43 @@ class ThreeColorEffect():
 
 
 class TileEffect:
-    def __init__(self, colors):
-        colors.self = colors
+    def __init__(self, color, levels):
+        """Initialise the color the posterisation will be based on,
+        and the level of posterisation
+        """
+        self.color = color
+        self.levels = levels
+
+    def color_posterise(self, painting):
+        target_color = Color(self.color)
+        for x in range(painting.width):
+            for y in range(painting.height):
+                current_coordinate = x, y
+                current_pixel = painting.pixels[current_coordinate]
+                current_color = Color(current_pixel)
+                lum_step = 255.0 / self.levels
+                difference = 255 / self.levels
+
+                if current_color.luminance <= lum_step:
+                    new_color = target_color.get_color()
+                    painting.set_pixel(current_coordinate, new_color)
+                else:
+                    lum = lum_step
+                    next_lum = lum + lum_step
+                    iterations = 1
+
+                    while lum < 255:
+                        if lum < current_color.luminance <= next_lum:
+                            target_color.set_color(target_color + (difference * iterations))
+                            new_color = target_color.get_color()
+                            painting.set_pixel(current_coordinate, new_color)
+                            break
+                        else:
+                            lum = next_lum
+                            next_lum = lum + lum_step
+                            iterations += 1
+
+                target_color.set_color(self.color)
 
 
 show_gallery()
