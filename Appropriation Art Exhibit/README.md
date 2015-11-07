@@ -7,10 +7,15 @@ Some methods can be made more general, such as the one that returns a list of pi
 
 I intend to make the colour changing effect work with both RGB and RGBA images, as currently it only works with RGB.
 
+Tile effect needs tidying up and is currently quite slow.
+
+
 ##Source Images Used:
 
 **jegermeister.jpg** TrollfesT JegerMeister T-shirt design (I can't find the image online anymore)
 
 **sad.jpg** Image made by me
 
-**hug.jpg** Image made by me
+**hug.png** Image made by me
+
+**alf.png** Image made by me
