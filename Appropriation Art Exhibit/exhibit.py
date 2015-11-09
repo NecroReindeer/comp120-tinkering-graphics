@@ -34,10 +34,10 @@ def show_gallery():
     output_dir = "output-images"
 
     file = "alf.png"
-    colors = [(150, 0, 150),
+    colors = ((150, 0, 150),
               (150, 150, 0),
               (0, 150, 0),
-              (0, 150, 150)]
+              (0, 150, 150))
     dog_painting = Painting(os.path.join(input_dir, file))
     tile_effect = TileEffect(colors, 6, 2)
     tile_effect.color_tile(dog_painting)
@@ -70,47 +70,60 @@ def show_gallery():
 
 
 class Color(object):
-    def __init__(self, color):
-        self.color = list(color)
+    """Class for manipulating colours"""
+    def __init__(self, red, green, blue, alpha=None):
+        self.color = red, green, blue, alpha
 
     @property
     def color(self):
-        return self.__color
+        if self.alpha == None:
+            return self.red, self.green, self.blue
+        else:
+            return self.red, self.green, self.blue, self.alpha
 
     @color.setter
-    def color(self, value):
-        self.__color = list(value)
+    def color(self, color_tuple):
+        self.__red = color_tuple[0]
+        self.__green = color_tuple[1]
+        self.__blue = color_tuple[2]
+        if len(color_tuple) == 4:
+            self.__alpha = color_tuple[3]
         self.__luminance = self.recalculate_luminance()
 
     @property
     def red(self):
         """Red component as an integer"""
-        return self.__color[0]
+        return self.__red
 
     @red.setter
     def red(self, value):
-        self.__color[0] = value
-        self.recalculate_luminance()
+        self.__red = value
 
     @property
     def green(self):
         """Green component as an integer"""
-        return self.__color[1]
+        return self.__green
 
     @green.setter
     def green(self, value):
-        self.__color[1] = value
-        self.recalculate_luminance()
+        self.__green = value
 
     @property
     def blue(self):
         """Blue component as an integer"""
-        return self.__color[2]
+        return self.__blue
 
     @blue.setter
     def blue(self, value):
-        self.__color[2] = value
-        self.recalculate_luminance()
+        self.__blue = value
+
+    @property
+    def alpha(self):
+        return self.__alpha
+
+    @alpha.setter
+    def alpha(self, value):
+        self.__alpha = value
 
     @property
     def luminance(self):
@@ -121,69 +134,78 @@ class Color(object):
         return lum
 
     def __add__(self, other):
+        color = list(self.color)
         if isinstance(other, int):
             for i in range(len(self.color)):
-                self.color[i] += other
+                color[i] += other
+                self.color = tuple(color)
             return self.color
         elif isinstance(other, tuple):
             for i in range(len(self.color)):
-                self.color[i] += other[i]
+                color[i] += other[i]
+                self.color = tuple(color)
             return self.color
 
     def __sub__(self, other):
+        color = list(self.color)
         if isinstance(other, int):
             for i in range(len(self.color)):
-                self.color[i] -= other
+                color[i] -= other
+                self.color = tuple(color)
             return self.color
         elif isinstance(other, tuple):
             for i in range(len(self.color)):
-                self.color[i] -= other[i]
+                color[i] -= other[i]
+                self.color = tuple(color)
             return self.color
 
     def __mul__(self, other):
+        color = list(self.color)
         if isinstance(other, int):
             for i in range(len(self.color)):
-                self.color[i] *= other
+                color[i] *= other
+                self.color = tuple(color)
             return self.color
 
-    def get_color(self):
-        return tuple(self.color)
-
-    def set_color(self, color):
-        self.color = color
-
-
-class Painting():
+class Painting(object):
     """Store image data so that variables for the data do not
     need to be defined/passed in/to every function that uses them.
     """
-
     def __init__(self, img):
-        """Takes an object instance of type Image or a string"""
-        if isinstance(img, str):
-            self.__img = Image.open(img)
-        else:
-            self.__img = img
+            self.img = img
+
+    @property
+    def img(self):
+        return self.__img
+
+    @img.setter
+    def img(self, new_image):
+        if isinstance(new_image, Painting):
+            self.__img = new_image.__img
+        elif isinstance(new_image, Image.Image):
+            self.__img = new_image
+        elif isinstance(new_image, str):
+            self.__img = Image.open(new_image)
 
     @property
     def pixels(self):
-        return self.__img.load()
+        return self.img.load()
 
     @property
     def width(self):
-        return self.__img.size[0]
+        return self.img.size[0]
 
     @property
     def height(self):
-        return self.__img.size[1]
+        return self.img.size[1]
 
     @property
     def mode(self):
-        return self.__img.mode
+        return self.img.mode
 
     def show(self):
         """Show the image in default image viewer"""
-        self.__img.show()
+        self.img.show()
 
     def copy(self):
         """Return a copy of the Painting instance"""
@@ -193,25 +215,16 @@ class Painting():
 
     def save(self, path):
         """Save the image in the location specified by path (path is a string)"""
-        self.__img.save(path)
+        self.img.save(path)
 
     def paste(self, painting, box):
-        self.__img.paste(painting.__img, box)
+        self.img.paste(painting.img, box)
 
     def resize(self, size):
         """Returns a copy of a painting resized to a specified size"""
-        resized_img = self.__img.resize(size)
+        resized_img = self.img.resize(size)
         new_painting = Painting(resized_img)
         return new_painting
-
-    def set_image(self, new_image):
-        if isinstance(new_image, Image.Image):
-            self.__img = new_image
-        if isinstance(new_image, Painting):
-            self.__img = new_image.__img
-
-    def get_image(self):
-        return self.__img
 
     def set_pixel(self, coordinates, color):
         """Set pixel at coordinates to color passed in as tuple"""
@@ -224,7 +237,7 @@ class Painting():
     def clear_image(self, color):
         """Set image to a single color from a tuple"""
         blank_img = Image.new(self.mode, (self.width, self.height), color)
-        self.__img = blank_img
+        self.img = blank_img
 
     def get_square(self, centre, width, height):
         """Return a list of pixel coordinates contained in a square
@@ -298,7 +311,7 @@ class DotEffect():
                 pixel_square = painting.get_square(centre, squaresize, squaresize)
                 centre_color = painting.get_pixel(centre)
                 self.draw_circle(canvas, pixel_square, centre, centre_color)
-        painting.set_image(canvas)
+        painting.img = canvas
 
 
 class ShuffleEffect():
@@ -407,7 +420,7 @@ class TileEffect:
     def color_tile(self, painting):
         paintings = self.color_posterise(painting)
         new_painting = self.tile_images(paintings)
-        painting.set_image(new_painting)
+        painting.img = new_painting
 
     def get_paintings(self, painting):
         paintings = []
@@ -427,7 +440,7 @@ class TileEffect:
             for y in range(painting.height):
                 current_coordinate = x, y
                 current_pixel = painting.get_pixel(current_coordinate)
-                current_color = Color(current_pixel)
+                current_color = Color(*current_pixel)
                 lum_step = 255.0 / self.levels
                 difference = 255 / self.levels
 
@@ -444,9 +457,9 @@ class TileEffect:
                         if lum < current_color.luminance <= next_lum:
                             for i in range(number_of_colors):
                                 target_color = self.colors[i]
-                                new_color = Color(target_color)
-                                new_color.set_color(new_color + (difference * iterations))
-                                paintings[i].set_pixel(current_coordinate, new_color.get_color())
+                                new_color = Color(*target_color)
+                                new_color.color = new_color + (difference * iterations)
+                                paintings[i].set_pixel(current_coordinate, new_color.color)
                             break
                         else:
                             lum = next_lum
