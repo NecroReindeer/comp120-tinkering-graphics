@@ -69,36 +69,63 @@ def show_gallery():
     jeger_painting.save(os.path.join(output_dir, file))
 
 
-class Color():
+class Color(object):
     def __init__(self, color):
         self.color = list(color)
 
     @property
+    def color(self):
+        return self.__color
+
+    @color.setter
+    def color(self, value):
+        self.__color = list(value)
+        self.__luminance = self.recalculate_luminance()
+
+    @property
     def red(self):
         """Red component as an integer"""
-        return self.color[0]
+        return self.__color[0]
+
+    @red.setter
+    def red(self, value):
+        self.__color[0] = value
+        self.recalculate_luminance()
 
     @property
     def green(self):
         """Green component as an integer"""
-        return self.color[1]
+        return self.__color[1]
+
+    @green.setter
+    def green(self, value):
+        self.__color[1] = value
+        self.recalculate_luminance()
 
     @property
     def blue(self):
         """Blue component as an integer"""
-        return self.color[2]
+        return self.__color[2]
+
+    @blue.setter
+    def blue(self, value):
+        self.__color[2] = value
+        self.recalculate_luminance()
 
     @property
     def luminance(self):
-        luminance = (self.red + self.blue + self.green)/3
-        return luminance
+        return self.__luminance
+
+    def recalculate_luminance(self):
+        lum = (self.red + self.green + self.blue)/3
+        return lum
 
     def __add__(self, other):
         if isinstance(other, int):
             for i in range(len(self.color)):
                 self.color[i] += other
             return self.color
-        if isinstance(other, tuple):
+        elif isinstance(other, tuple):
             for i in range(len(self.color)):
                 self.color[i] += other[i]
             return self.color
@@ -108,7 +135,7 @@ class Color():
             for i in range(len(self.color)):
                 self.color[i] -= other
             return self.color
-        if isinstance(other, tuple):
+        elif isinstance(other, tuple):
             for i in range(len(self.color)):
                 self.color[i] -= other[i]
             return self.color
