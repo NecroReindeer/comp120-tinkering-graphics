@@ -88,7 +88,7 @@ class Color(object):
         self.__blue = color_tuple[2]
         if len(color_tuple) == 4:
             self.__alpha = color_tuple[3]
-        self.__luminance = self.recalculate_luminance()
+        self.__luminance = self.calculate_luminance()
 
     @property
     def red(self):
@@ -98,6 +98,7 @@ class Color(object):
     @red.setter
     def red(self, value):
         self.__red = value
+        self.__luminance = self.calculate_luminance()
 
     @property
     def green(self):
@@ -107,6 +108,7 @@ class Color(object):
     @green.setter
     def green(self, value):
         self.__green = value
+        self.__luminance = self.calculate_luminance()
 
     @property
     def blue(self):
@@ -116,6 +118,7 @@ class Color(object):
     @blue.setter
     def blue(self, value):
         self.__blue = value
+        self.__luminance = self.calculate_luminance()
 
     @property
     def alpha(self):
@@ -129,7 +132,7 @@ class Color(object):
     def luminance(self):
         return self.__luminance
 
-    def recalculate_luminance(self):
+    def calculate_luminance(self):
         lum = (self.red + self.green + self.blue)/3
         return lum
 
@@ -167,12 +170,81 @@ class Color(object):
                 self.color = tuple(color)
             return self.color
 
+class Circle():
+    def __init__(self, centre_coordinates, radius, color):
+        self.__centre = centre_coordinates
+        self.__radius = radius
+        self.__color = color
+
+    @property
+    def x_centre(self):
+        return self.__centre[0]
+
+    @property
+    def y_centre(self):
+        return self.__centre[1]
+
+    @property
+    def radius(self):
+        return self.__radius
+
+    @property
+    def color(self):
+        return self.__color
+
+    def isInImage(self, canvas, x, y):
+        if 0 < x < canvas.width and 0 < y < canvas.height:
+            return True
+
+    def draw(self, canvas):
+        """Draw a circle on the canvas
+
+        Arguments:
+        canvas -- instance of Painting object
+        """
+        # Using Bresenham's midpoint circle algorithm -- https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+        # Adapted from the C example halfway down the page
+        # Then using the idea presented in the top answer at --
+        # http://stackoverflow.com/questions/1201200/fast-algorithm-for-drawing-filled-circles
+        x = self.radius
+        y = 0
+        decision_over_2 = 1 - x
+
+        while y <= x:
+            for x_coord in range(self.x_centre - y, self.x_centre + y):
+                y_coord = self.y_centre - x
+                if self.isInImage(canvas, x_coord, y_coord):
+                    canvas.set_pixel((x_coord, y_coord), self.color)
+
+            for x_coord in range(self.x_centre - x, self.x_centre + x):
+                y_coord = self.y_centre - y
+                if self.isInImage(canvas, x_coord, y_coord):
+                    canvas.set_pixel((x_coord, y_coord), self.color)
+
+            for x_coord in range(self.x_centre - x, self.x_centre + x):
+                y_coord = self.y_centre + y
+                if self.isInImage(canvas, x_coord, y_coord):
+                    canvas.set_pixel((x_coord, y_coord), self.color)
+
+            for x_coord in range(self.x_centre - y, self.x_centre + y):
+                y_coord = self.y_centre + x
+                if self.isInImage(canvas, x_coord, y_coord):
+                    canvas.set_pixel((x_coord, y_coord), self.color)
+
+            y += 1
+            if decision_over_2 <= 0:
+                decision_over_2 += 2 * y + 1
+            else:
+                x -= 1
+                decision_over_2 += 2 * (y - x) + 1
+
 class Painting(object):
     """Store image data so that variables for the data do not
     need to be defined/passed in/to every function that uses them.
     """
     def __init__(self, img):
-            self.img = img
+        """Can take arguments of type Painting, Image.Image or str"""
+        self.img = img
 
     @property
     def img(self):
@@ -209,7 +281,7 @@ class Painting(object):
 
     def copy(self):
         """Return a copy of the Painting instance"""
-        img_copy = self.__img.copy()
+        img_copy = self.img.copy()
         painting_copy = Painting(img_copy)
         return painting_copy
 
@@ -264,61 +336,74 @@ class Painting(object):
 
 
 class DotEffect():
+    """An effect that changes the image to be made out of circles."""
     def __init__(self, radius, gap, background):
-        self.radius = radius
-        self.diameter = self.radius * 2
-        self.gap = gap
-        self.background = background
-
-    def get_squaresize(self):
-        """Set the size of the square of pixels that
-        will be checked to an even number to account for
-        rounding errors and returns it as an int.
-        """
-        if (self.diameter + self.gap) % 2 != 0:
-            squaresize = self.diameter + self.gap + 1
-        else:
-            squaresize = self.diameter + self.gap
-        return squaresize
-
-    def draw_circle(self, canvas, pixels, centre, color):
-        """Draw a circle
+        """Initialises the properties.
 
         Arguments:
-        canvas -- Painting instance that the circles will be drawn on
-        pixels -- List of pixel coordinates that will be checked
-        centre -- Tuple containing coordinates of the centre of the circle
-        color -- Tuple containing color component values for color of circle
+        radius -- radius of the circle as an int
+        gap -- gap between the circles as an int
+        background -- background colour of the image as a tuple
         """
-        for pixel in pixels:
-            distance_from_centre = get_distance(pixel, centre)         # Because every point on the circumference of a
-            if distance_from_centre < self.radius:                     # circle is equal distance from the centre
-                canvas.set_pixel(pixel, color)
+        self.__radius = radius
+        self.__gap = gap
+        self.__background = background
+
+    @property
+    def radius(self):
+        return self.__radius
+
+    @property
+    def diameter(self):
+        return self.__radius * 2
+
+    @property
+    def gap(self):
+        return self.__gap
+
+    @property
+    def background(self):
+        return self.__background
 
     def convert_to_dots(self, painting):
         """Convert an image to be made up of circles of a
         given radius with the colour of the pixel at the
-        centre of the circle on a background colour
+        centre of the circle on a given background colour
         """
-        squaresize = self.get_squaresize()
-        first_centre = squaresize / 2                                  # So circles on top edge are fully visible
+        distance_between_centres = self.diameter + self.gap
+        # So that circles on top and left edges are fully visible
+        first_centre = distance_between_centres / 2
         canvas = painting.copy()
         canvas.clear_image(self.background)
 
-        for x in range(first_centre, painting.width, squaresize):
-            for y in range(first_centre, painting.height, squaresize):
+        for x in range(first_centre, painting.width, distance_between_centres):
+            for y in range(first_centre, painting.height, distance_between_centres):
                 centre = x, y
-                pixel_square = painting.get_square(centre, squaresize, squaresize)
                 centre_color = painting.get_pixel(centre)
-                self.draw_circle(canvas, pixel_square, centre, centre_color)
+                circle = Circle(centre, self.radius, centre_color)
+                circle.draw(canvas)
         painting.img = canvas
 
 
 class ShuffleEffect():
     """Class that sets up effect to shuffle pixels in an image"""
     def __init__(self, shuffle_step, randomness):
-        self.shuffle_step = shuffle_step
-        self.randomness = randomness
+        """Initialise the properties.
+
+        Arguments:
+        shuffle_step -- base amount that the pixels are allowed to move as an int
+        randomness -- amount that the shuffle_step is allowed to vary for each pixel
+        """
+        self.__shuffle_step = shuffle_step
+        self.__randomness = randomness
+
+    @property
+    def shuffle_step(self):
+        return self.__shuffle_step
+
+    @property
+    def randomness(self):
+        return self.__randomness
 
     def get_random_squaresize(self):
         """Return a random integer to be used for the
@@ -389,8 +474,7 @@ class ThreeColorEffect():
             for y in range(painting.height):
                 current_coordinate = x, y
                 current_pixel = painting.get_pixel(current_coordinate)
-                can_change = self.check_dominant_color(current_pixel,
-                                                    current_component_index)
+                can_change = self.check_dominant_color(current_pixel, current_component_index)
 
                 if can_change:
                     painting.set_pixel(current_coordinate, self.replacement_colors[current_component_index])
@@ -494,7 +578,8 @@ class TileEffect:
                 coordinates = x, y
                 canvas.paste(tile, coordinates)
                 index += 1
-                current_painting = paintings[index % len(paintings)]                # So that it doesn't matter if there are more tiles than colours
+                # So that it doesn't matter if there are more tiles than colours
+                current_painting = paintings[index % len(paintings)]
         return canvas
 
 show_gallery()
