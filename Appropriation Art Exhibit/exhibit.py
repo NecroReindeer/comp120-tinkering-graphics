@@ -69,6 +69,36 @@ def show_gallery():
     jeger_painting.save(os.path.join(output_dir, file))
 
 
+class Point(object):
+    def __init__(self, x, y):
+        self.coordinates = x, y
+
+    @property
+    def coordinates(self):
+        return self.__x, self.__y
+
+    @coordinates.setter
+    def coordinates(self, (x, y)):
+        self.__x = x
+        self.__y = y
+
+    @property
+    def x(self):
+        return self.__x
+
+    @x.setter
+    def x(self, value):
+        self.__x = value
+
+    @property
+    def y(self):
+        return self.__y
+
+    @y.setter
+    def y(self, value):
+        self.__y = value
+
+
 class Color(object):
     """Class for manipulating colours"""
     def __init__(self, red, green, blue, alpha=None):
@@ -83,6 +113,7 @@ class Color(object):
 
     @color.setter
     def color(self, color_tuple):
+        #Argument is a tuple so that length can be accessed
         self.__red = color_tuple[0]
         self.__green = color_tuple[1]
         self.__blue = color_tuple[2]
@@ -170,19 +201,16 @@ class Color(object):
                 self.color = tuple(color)
             return self.color
 
+
 class Circle():
-    def __init__(self, centre_coordinates, radius, color):
-        self.__centre = centre_coordinates
+    def __init__(self, centre, radius, color):
+        self.__centre = centre
         self.__radius = radius
         self.__color = color
 
     @property
-    def x_centre(self):
-        return self.__centre[0]
-
-    @property
-    def y_centre(self):
-        return self.__centre[1]
+    def centre(self):
+        return self.__centre
 
     @property
     def radius(self):
@@ -211,25 +239,25 @@ class Circle():
         decision_over_2 = 1 - x
 
         while y <= x:
-            for x_coord in range(self.x_centre - y, self.x_centre + y):
-                y_coord = self.y_centre - x
-                if self.isInImage(canvas, x_coord, y_coord):
-                    canvas.set_pixel((x_coord, y_coord), self.color)
+            for x_coord in range(self.centre.x - y, self.centre.x + y):
+                coord = Point(x_coord, self.centre.y - x)
+                if canvas.is_in_image(coord):
+                    canvas.set_pixel(coord, self.color)
 
-            for x_coord in range(self.x_centre - x, self.x_centre + x):
-                y_coord = self.y_centre - y
-                if self.isInImage(canvas, x_coord, y_coord):
-                    canvas.set_pixel((x_coord, y_coord), self.color)
+            for x_coord in range(self.centre.x - x, self.centre.x + x):
+                coord = Point(x_coord, self.centre.y - y)
+                if canvas.is_in_image(coord):
+                    canvas.set_pixel(coord, self.color)
 
-            for x_coord in range(self.x_centre - x, self.x_centre + x):
-                y_coord = self.y_centre + y
-                if self.isInImage(canvas, x_coord, y_coord):
-                    canvas.set_pixel((x_coord, y_coord), self.color)
+            for x_coord in range(self.centre.x - x, self.centre.x + x):
+                coord = Point(x_coord, self.centre.y + y)
+                if canvas.is_in_image(coord):
+                    canvas.set_pixel(coord, self.color)
 
-            for x_coord in range(self.x_centre - y, self.x_centre + y):
-                y_coord = self.y_centre + x
-                if self.isInImage(canvas, x_coord, y_coord):
-                    canvas.set_pixel((x_coord, y_coord), self.color)
+            for x_coord in range(self.centre.x - y, self.centre.x + y):
+                coord = Point(x_coord, self.centre.y + x)
+                if canvas.is_in_image(coord):
+                    canvas.set_pixel(coord, self.color)
 
             y += 1
             if decision_over_2 <= 0:
@@ -259,21 +287,31 @@ class Painting(object):
         elif isinstance(new_image, str):
             self.__img = Image.open(new_image)
 
+        self.__pixels = self.img.load()
+        self.__size = self.img.size
+        self.__width = self.size[0]
+        self.__height = self.size[1]
+        self.__mode = self.img.mode
+
     @property
     def pixels(self):
-        return self.img.load()
+        return self.__pixels
+
+    @property
+    def size(self):
+        return self.__size
 
     @property
     def width(self):
-        return self.img.size[0]
+        return self.__width
 
     @property
     def height(self):
-        return self.img.size[1]
+        return self.__height
 
     @property
     def mode(self):
-        return self.img.mode
+        return self.__mode
 
     def show(self):
         """Show the image in default image viewer"""
@@ -289,8 +327,11 @@ class Painting(object):
         """Save the image in the location specified by path (path is a string)"""
         self.img.save(path)
 
-    def paste(self, painting, box):
-        self.img.paste(painting.img, box)
+    def paste(self, painting, top_left):
+        if isinstance(top_left, Point):
+            self.img.paste(painting.img, top_left.coordinates)
+        elif isinstance(top_left, tuple):
+            self.img.paste(painting.img, top_left)
 
     def resize(self, size):
         """Returns a copy of a painting resized to a specified size"""
@@ -300,16 +341,28 @@ class Painting(object):
 
     def set_pixel(self, coordinates, color):
         """Set pixel at coordinates to color passed in as tuple"""
-        self.pixels[coordinates] = color
+        if isinstance(coordinates, Point):
+            self.pixels[coordinates.coordinates] = color
+        elif isinstance(coordinates, tuple):
+            self.pixels[coordinates] = color
 
     def get_pixel(self, coordinates):
         """Return the color of the pixel at coordinates as a tuple"""
-        return self.pixels[coordinates]
+        if isinstance(coordinates, Point):
+            return self.pixels[coordinates.coordinates]
+        elif isinstance(coordinates, tuple):
+            return self.pixels[coordinates]
 
     def clear_image(self, color):
         """Set image to a single color from a tuple"""
         blank_img = Image.new(self.mode, (self.width, self.height), color)
         self.img = blank_img
+
+    def is_in_image(self, point):
+        if 0 < point.x < self.width and 0 < point.y < self.height:
+            return True
+        else:
+            return False
 
     def get_square(self, centre, width, height):
         """Return a list of pixel coordinates contained in a square
@@ -322,16 +375,17 @@ class Painting(object):
         """
         pixel_square = []
 
-        start_x = centre[0] - width/2
-        end_x = centre[0] + width/2
+        start_x = centre.x - width/2
+        end_x = centre.x + width/2
 
-        start_y = centre[1] - height/2
-        end_y = centre[1] + height/2
+        start_y = centre.y - height/2
+        end_y = centre.y + height/2
 
         for x in range(start_x, end_x):
             for y in range(start_y, end_y):
-                if 0 < x < self.width and 0 < y < self.height:
-                    pixel_square.append((x,y))
+                coord = Point(x, y)
+                if self.is_in_image(coord):
+                    pixel_square.append(coord)
         return pixel_square
 
 
@@ -355,7 +409,7 @@ class DotEffect():
 
     @property
     def diameter(self):
-        return self.__radius * 2
+        return self.__radius*2
 
     @property
     def gap(self):
@@ -372,13 +426,13 @@ class DotEffect():
         """
         distance_between_centres = self.diameter + self.gap
         # So that circles on top and left edges are fully visible
-        first_centre = distance_between_centres / 2
+        first_centre = distance_between_centres/2
         canvas = painting.copy()
         canvas.clear_image(self.background)
 
         for x in range(first_centre, painting.width, distance_between_centres):
             for y in range(first_centre, painting.height, distance_between_centres):
-                centre = x, y
+                centre = Point(x, y)
                 centre_color = painting.get_pixel(centre)
                 circle = Circle(centre, self.radius, centre_color)
                 circle.draw(canvas)
@@ -419,7 +473,7 @@ class ShuffleEffect():
         original_painting = painting.copy()
         for x in range(0, painting.width, self.shuffle_step):
             for y in range(0, painting.height, self.shuffle_step):
-                current_coordinate = (x,y)
+                current_coordinate = Point(x, y)
                 squaresize = self.get_random_squaresize()
                 pixel_square = original_painting.get_square(current_coordinate,
                                                          squaresize, squaresize)
@@ -434,9 +488,21 @@ class ShuffleEffect():
 
 class ThreeColorEffect():
     def __init__(self, threshold, difference, replacement_colors):
-        self.threshold = threshold
-        self.difference = difference
-        self.replacement_colors = replacement_colors
+        self.__threshold = threshold
+        self.__difference = difference
+        self.__replacement_colors = replacement_colors
+
+    @property
+    def threshold(self):
+        return self.__threshold
+
+    @property
+    def difference(self):
+        return self.__difference
+
+    @property
+    def replacement_colors(self):
+        return self.__replacement_colors
 
     def replace_dominant_colors(self, painting):
         """Change pixels with a colour component above threshold to
@@ -472,7 +538,7 @@ class ThreeColorEffect():
         """
         for x in range(painting.width):
             for y in range(painting.height):
-                current_coordinate = x, y
+                current_coordinate = Point(x, y)
                 current_pixel = painting.get_pixel(current_coordinate)
                 can_change = self.check_dominant_color(current_pixel, current_component_index)
 
@@ -485,7 +551,7 @@ class ThreeColorEffect():
         """
         for x in range(painting.width):
             for y in range(painting.height):
-                current_coordinate = x, y
+                current_coordinate = Point(x, y)
                 current_pixel = painting.get_pixel(current_coordinate)
                 if current_pixel not in self.replacement_colors:
                     painting.set_pixel(current_coordinate, BLACK)
@@ -497,9 +563,21 @@ class TileEffect:
         the level of posterisation, and the number of tiles on
         each side of the square
         """
-        self.colors = colors
-        self.levels = levels
-        self.size = size
+        self.__colors = colors
+        self.__levels = levels
+        self.__size = size
+
+    @property
+    def colors(self):
+        return self.__colors
+
+    @property
+    def levels(self):
+        return self.__levels
+
+    @property
+    def size(self):
+        return self.__size
 
     def color_tile(self, painting):
         paintings = self.color_posterise(painting)
@@ -522,7 +600,7 @@ class TileEffect:
 
         for x in range(painting.width):
             for y in range(painting.height):
-                current_coordinate = x, y
+                current_coordinate = Point(x, y)
                 current_pixel = painting.get_pixel(current_coordinate)
                 current_color = Color(*current_pixel)
                 lum_step = 255.0 / self.levels
@@ -575,7 +653,7 @@ class TileEffect:
         for x in range(0, canvas.width, tile_size[0]):
             for y in range(0, canvas.height, tile_size[1]):
                 tile = current_painting.resize(tile_size)
-                coordinates = x, y
+                coordinates = Point(x, y)
                 canvas.paste(tile, coordinates)
                 index += 1
                 # So that it doesn't matter if there are more tiles than colours
