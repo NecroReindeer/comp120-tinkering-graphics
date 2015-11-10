@@ -5,6 +5,7 @@ import math
 import os
 
 from PIL import Image
+from PIL import ImageDraw
 
 
 # The number of colour components, in this case, 3 (red, green and blue)
@@ -33,43 +34,47 @@ def show_gallery():
     input_dir = "source-images"
     output_dir = "output-images"
 
-    file = "alf.png"
+    filenames = ["alf.png",
+                 "hug.png",
+                 "sad.jpg",
+                 "jegermeister.jpg"]
+
+    paintings = []
+    for filename in filenames:
+        paintings.append(Painting(os.path.join(input_dir, filename)))
+
+    effects = []
     colors = ((150, 0, 150),
               (150, 150, 0),
               (0, 150, 0),
               (0, 150, 150))
-    dog_painting = Painting(os.path.join(input_dir, file))
     tile_effect = TileEffect(colors, 6, 2)
-    tile_effect.color_tile(dog_painting)
-    dog_painting.show()
-    dog_painting.save(os.path.join(output_dir, file))
+    effects.append(tile_effect)
 
-    file = "hug.png"
-    hug_painting = Painting(os.path.join(input_dir, file))
     dot_effect = DotEffect(10, 5, BLACK)
-    dot_effect.convert_to_dots(hug_painting)
-    hug_painting.show()
-    hug_painting.save(os.path.join(output_dir, file))
+    effects.append(dot_effect)
 
-    file = "sad.jpg"
-    sad_painting = Painting(os.path.join(input_dir, file))
     shuffle_effect = ShuffleEffect(10, 3)
-    shuffle_effect.shuffle_image(sad_painting)
-    sad_painting.show()
-    sad_painting.save(os.path.join(output_dir, file))
+    effects.append(shuffle_effect)
 
-    file = "jegermeister.jpg"
-    new_colors = [(255, 0, 255),
-                 (255, 255, 0),
-                 (0, 255, 255)]
-    jeger_painting = Painting(os.path.join(input_dir, file))
-    colorchange_effect = ThreeColorEffect(50, 0.9, new_colors)
-    colorchange_effect.replace_dominant_colors(jeger_painting)
-    jeger_painting.show()
-    jeger_painting.save(os.path.join(output_dir, file))
+    colors = ((255, 0, 255),
+              (255, 255, 0),
+              (0, 255, 255))
+    colorchange_effect = ThreeColorEffect(50, 0.9, colors)
+    effects.append(colorchange_effect)
 
+    for i in range(len(effects)):
+        effects[i].do_effect(paintings[i])
+        paintings[i].show()
+
+    for i in range(len(paintings)):
+        paintings[i].save(os.path.join(output_dir, filenames[i]))
 
 class Point(object):
+    """Class for storing and manipulating coordinates of points.
+    Properties allow access to x coordinate as an int, y coordinate
+    as an int, and coordinates as a tuple.
+    """
     def __init__(self, x, y):
         self.coordinates = x, y
 
@@ -167,6 +172,9 @@ class Color(object):
         lum = (self.red + self.green + self.blue)/3
         return lum
 
+    def copy(self):
+        return Color(*self.color)
+
     def __add__(self, other):
         color = list(self.color)
         if isinstance(other, int):
@@ -219,10 +227,6 @@ class Circle():
     @property
     def color(self):
         return self.__color
-
-    def isInImage(self, canvas, x, y):
-        if 0 < x < canvas.width and 0 < y < canvas.height:
-            return True
 
     def draw(self, canvas):
         """Draw a circle on the canvas
@@ -328,6 +332,7 @@ class Painting(object):
         self.img.save(path)
 
     def paste(self, painting, top_left):
+        """Paste image from a Painting into this instance of Painting"""
         if isinstance(top_left, Point):
             self.img.paste(painting.img, top_left.coordinates)
         elif isinstance(top_left, tuple):
@@ -389,7 +394,12 @@ class Painting(object):
         return pixel_square
 
 
-class DotEffect():
+class Effect():
+    """Abstract class for effects"""
+    def do_effect(self, painting):
+        raise NotImplementedError("Subclasses must implement do_effect")
+
+class DotEffect(Effect):
     """An effect that changes the image to be made out of circles."""
     def __init__(self, radius, gap, background):
         """Initialises the properties.
@@ -419,7 +429,7 @@ class DotEffect():
     def background(self):
         return self.__background
 
-    def convert_to_dots(self, painting):
+    def do_effect(self, painting):
         """Convert an image to be made up of circles of a
         given radius with the colour of the pixel at the
         centre of the circle on a given background colour
@@ -439,7 +449,7 @@ class DotEffect():
         painting.img = canvas
 
 
-class ShuffleEffect():
+class ShuffleEffect(Effect):
     """Class that sets up effect to shuffle pixels in an image"""
     def __init__(self, shuffle_step, randomness):
         """Initialise the properties.
@@ -459,16 +469,7 @@ class ShuffleEffect():
     def randomness(self):
         return self.__randomness
 
-    def get_random_squaresize(self):
-        """Return a random integer to be used for the
-        lengths of the sides of a square in order to make
-        the resulting picture look less uniform and grid-like
-        """
-        squaresize = random.randrange(self.shuffle_step,
-                                      self.shuffle_step * self.randomness)
-        return squaresize
-
-    def shuffle_image(self, painting):
+    def do_effect(self, painting):
         """Swap each pixel in an image with a random nearby pixel"""
         original_painting = painting.copy()
         for x in range(0, painting.width, self.shuffle_step):
@@ -485,8 +486,17 @@ class ShuffleEffect():
                     pixel_to_be_replaced = shuffled_pixel_square.pop()
                     painting.set_pixel(pixel_to_be_replaced, pixel_to_move)
 
+    def get_random_squaresize(self):
+        """Return a random integer to be used for the
+        lengths of the sides of a square in order to make
+        the resulting picture look less uniform and grid-like
+        """
+        squaresize = random.randrange(self.shuffle_step,
+                                      self.shuffle_step * self.randomness)
+        return squaresize
 
-class ThreeColorEffect():
+
+class ThreeColorEffect(Effect):
     def __init__(self, threshold, difference, replacement_colors):
         self.__threshold = threshold
         self.__difference = difference
@@ -504,7 +514,7 @@ class ThreeColorEffect():
     def replacement_colors(self):
         return self.__replacement_colors
 
-    def replace_dominant_colors(self, painting):
+    def do_effect(self, painting):
         """Change pixels with a colour component above threshold to
         relative colour in replacementColors, then changes every other colour to black.
         """
@@ -557,19 +567,24 @@ class ThreeColorEffect():
                     painting.set_pixel(current_coordinate, BLACK)
 
 
-class TileEffect:
+class TileEffect(Effect):
     def __init__(self, colors, levels, size):
         """Initialise the colors the posterisation will be based on,
         the level of posterisation, and the number of tiles on
         each side of the square
         """
         self.__colors = colors
+        self.__number_of_colors = len(self.colors)
         self.__levels = levels
         self.__size = size
 
     @property
     def colors(self):
         return self.__colors
+
+    @property
+    def number_of_colors(self):
+        return self.__number_of_colors
 
     @property
     def levels(self):
@@ -579,7 +594,7 @@ class TileEffect:
     def size(self):
         return self.__size
 
-    def color_tile(self, painting):
+    def do_effect(self, painting):
         paintings = self.color_posterise(painting)
         new_painting = self.tile_images(paintings)
         painting.img = new_painting
@@ -607,7 +622,7 @@ class TileEffect:
                 difference = 255 / self.levels
 
                 if current_color.luminance <= lum_step:
-                    for i in range(number_of_colors):
+                    for i in range(self.number_of_colors):
                         target_color = self.colors[i]
                         paintings[i].set_pixel(current_coordinate, target_color)
                 else:
@@ -638,8 +653,9 @@ class TileEffect:
         return tile_width, tile_height
 
     def tile_images(self, paintings):
-        """Tile each Painting in paintings in a grid of self.size*self.size.
-        Loop back to first Painting if there are more tiles than colors provided
+        """Tile each Painting in paintings in a grid of self.size*self.size tiles.
+        Make resulting Painting the same size as the original.
+        Loop back to first Painting in paintings if there are more tiles than colors provided
 
         Arguments:
         paintings -- list of Painting object instances
@@ -647,8 +663,7 @@ class TileEffect:
         index = 0
         current_painting = paintings[index]
         tile_size = self.get_tile_size(current_painting)
-        canvas_size = current_painting.width, current_painting.height
-        canvas = Painting(Image.new(current_painting.mode, canvas_size))
+        canvas = Painting(Image.new(current_painting.mode, current_painting.size))
 
         for x in range(0, canvas.width, tile_size[0]):
             for y in range(0, canvas.height, tile_size[1]):
