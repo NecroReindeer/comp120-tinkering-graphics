@@ -10,6 +10,9 @@ I intend to make the colour changing effect work with both RGB and RGBA images, 
 
 Tile effect needs tidying up and is currently quite slow.
 
+##Additional Libraries Used:
+
+[Pillow](https://python-pillow.github.io/)
 
 ##Source Images Used:
 
