@@ -3,9 +3,9 @@ __author__ = 'Harriet'
 import random
 import math
 import os
+import time
 
 from PIL import Image
-from PIL import ImageDraw
 
 
 # The number of colour components, in this case, 3 (red, green and blue)
@@ -64,8 +64,14 @@ def show_gallery():
     effects.append(colorchange_effect)
 
     for i in range(len(effects)):
-        effects[i].do_effect(paintings[i])
-        paintings[i].show()
+        # So that it doesn't matter if there are more or
+        # less paintings than effects
+        start = time.clock()
+        painting_index = i % len(effects)
+        effects[i].do_effect(paintings[painting_index])
+        paintings[painting_index].show()
+        end = time.clock()
+        print '%s' % filenames[i], '%s' % 'took ' '%f' % (end-start), '%s' % 'seconds'
 
     for i in range(len(paintings)):
         paintings[i].save(os.path.join(output_dir, filenames[i]))
@@ -106,7 +112,10 @@ class Point(object):
 
 
 class Color(object):
-    """Class for manipulating colours"""
+    """Class for manipulating colours. Properties allow access
+    to red, green, blue and alpha components as integers as well
+    as the whole color as a tuple.
+    """
     def __init__(self, red, green, blue, alpha=None):
         self.color = red, green, blue, alpha
 
@@ -119,6 +128,9 @@ class Color(object):
 
     @color.setter
     def color(self, color_tuple):
+        """Change red, green, blue, alpha and luminance
+        appropriately when color is set.
+        """
         #Argument is a tuple so that length can be accessed
         self.__red = color_tuple[0]
         self.__green = color_tuple[1]
@@ -134,6 +146,7 @@ class Color(object):
 
     @red.setter
     def red(self, value):
+        """Set the red component to an integer and recalculate luminance"""
         self.__red = value
         self.__luminance = self.calculate_luminance()
 
@@ -144,6 +157,7 @@ class Color(object):
 
     @green.setter
     def green(self, value):
+        """Set the green component to an integer and recalculate luminance"""
         self.__green = value
         self.__luminance = self.calculate_luminance()
 
@@ -154,6 +168,7 @@ class Color(object):
 
     @blue.setter
     def blue(self, value):
+        """Set the blue component to an integer and recalculate luminance"""
         self.__blue = value
         self.__luminance = self.calculate_luminance()
 
@@ -170,6 +185,7 @@ class Color(object):
         return self.__luminance
 
     def get_component_by_index(self, i):
+        """Allow access to color components by index"""
         if i == 0:
             return self.red
         elif i == 1:
@@ -180,6 +196,7 @@ class Color(object):
             return self.alpha
 
     def set_component_by_index(self, i, value):
+        """Set color components by index"""
         if i == 0:
             self.red = value
         elif i == 1:
@@ -190,10 +207,13 @@ class Color(object):
             self.alpha = value
 
     def calculate_luminance(self):
+        # Luminance needs to be recalculated whenever any color
+        # component changes
         lum = (self.red + self.green + self.blue)/3
         return lum
 
     def copy(self):
+        """Return the Color as a new instance"""
         return Color(*self.color)
 
     def __add__(self, other):
@@ -312,6 +332,9 @@ class Painting(object):
 
     @img.setter
     def img(self, new_image):
+        """Set the data relating to the image correctly
+        when self.img is set
+        """
         if isinstance(new_image, Painting):
             self.__img = new_image.__img
         elif isinstance(new_image, Image.Image):
@@ -379,6 +402,7 @@ class Painting(object):
         self.img = blank_img
 
     def is_in_image(self, point):
+        """Checks if the supplied coordinate is within the image"""
         if 0 < point.x < self.width and 0 < point.y < self.height:
             return True
         else:
@@ -414,8 +438,9 @@ class Effect():
     def do_effect(self, painting):
         raise NotImplementedError("Subclasses must implement do_effect")
 
+
 class DotEffect(Effect):
-    """An effect that changes the image to be made out of circles."""
+    """Set up effect that changes the image to be made out of circles."""
     def __init__(self, radius, gap, background):
         """Initialises the properties.
 
@@ -465,7 +490,7 @@ class DotEffect(Effect):
 
 
 class ShuffleEffect(Effect):
-    """Class that sets up effect to shuffle pixels in an image"""
+    """Set up effect to shuffle pixels in an image"""
     def __init__(self, shuffle_step, randomness):
         """Initialise the properties.
 
@@ -512,7 +537,17 @@ class ShuffleEffect(Effect):
 
 
 class ThreeColorEffect(Effect):
+    """Set up effect to change pixels with a colour component above threshold to the
+    relative colour in replacement_colors, then change every other colour to black.
+    """
     def __init__(self, threshold, difference, replacement_colors):
+        """Initialises the properties.
+
+        Arguments:
+        threshold -- value that the color component must be at to change
+        difference -- amount that the component value must be larger than the other two
+        replacement_colors -- colors that each dominant component will be replaced by
+        """
         self.__threshold = threshold
         self.__difference = difference
         self.__replacement_colors = replacement_colors
@@ -530,9 +565,6 @@ class ThreeColorEffect(Effect):
         return self.__replacement_colors
 
     def do_effect(self, painting):
-        """Change pixels with a colour component above threshold to
-        relative colour in replacementColors, then changes every other colour to black.
-        """
         for component_index in range(NUMBER_OF_COLOR_COMPONENTS):
             self.change_dominant_color(component_index, painting)
         self.change_rest_to_black(painting)
@@ -584,9 +616,9 @@ class ThreeColorEffect(Effect):
 
 class TileEffect(Effect):
     def __init__(self, colors, levels, size):
-        """Initialise the colors the posterisation will be based on,
-        the level of posterisation, and the number of tiles on
-        each side of the square
+        """Initialise the properties for the colors the posterisation
+        will be based on, the level of posterisation, and the number
+        of tiles on each side of the square
         """
         self.__colors = colors
         self.__levels = levels
@@ -609,27 +641,34 @@ class TileEffect(Effect):
         return self.__size
 
     def do_effect(self, painting):
-        paintings = self.color_posterise(painting)
+        paintings = self.get_paintings(painting)
+        paintings = self.color_posterise(paintings)
         new_painting = self.tile_images(paintings)
         painting.img = new_painting
 
     def get_paintings(self, painting):
+        """Resize the paintings to the tile size and add
+        copies of them for each color to a list
+        """
         paintings = []
+        tile_size = self.get_tile_size(painting)
+        smaller_painting = painting.resize(tile_size)
         for i in range(self.number_of_colors):
-            new_painting = painting.copy()
+            new_painting = smaller_painting.copy()
             paintings.append(new_painting)
         return paintings
 
-    def color_posterise(self, painting):
+    def color_posterise(self, paintings):
         """Posterise paintings with colours in self.colors as a base
         and add each painting to a list.
         """
-        paintings = self.get_paintings(painting)
 
-        for x in range(painting.width):
-            for y in range(painting.height):
+        # All paintings in paintings are the same at this point, so
+        # just using paintings[0] to get the data from
+        for x in range(paintings[0].width):
+            for y in range(paintings[0].height):
                 current_coordinate = Point(x, y)
-                current_pixel_color = painting.get_pixel_color(current_coordinate)
+                current_pixel_color = paintings[0].get_pixel_color(current_coordinate)
                 lum_step = 255.0 / self.levels
                 difference = 255 / self.levels
 
@@ -640,8 +679,8 @@ class TileEffect(Effect):
                 else:
                     lum = lum_step
                     next_lum = lum + lum_step
-                    iterations = 1
 
+                    iterations = 1
                     while lum < 255:
                         if lum < current_pixel_color.luminance <= next_lum:
                             for i in range(self.number_of_colors):
@@ -663,27 +702,34 @@ class TileEffect(Effect):
         tile_height = painting.height / self.size
         return tile_width, tile_height
 
+    def get_canvas_size(self, painting):
+        """Get the tile size such that the resulting image is the
+        same size as the original image.
+        """
+        canvas_width = painting.width * self.size
+        canvas_height = painting.height * self.size
+        return canvas_width, canvas_height
+
     def tile_images(self, paintings):
         """Tile each Painting in paintings in a grid of self.size*self.size tiles.
         Make resulting Painting the same size as the original.
-        Loop back to first Painting in paintings if there are more tiles than colors provided
+        Loop back to first Painting in paintings if there are more tiles than colors provided.
 
         Arguments:
         paintings -- list of Painting object instances
         """
         index = 0
         current_painting = paintings[index]
-        tile_size = self.get_tile_size(current_painting)
-        canvas = Painting(Image.new(current_painting.mode, current_painting.size))
+        canvas = Painting(Image.new(current_painting.mode, self.get_canvas_size(paintings[0])))
 
-        for x in range(0, canvas.width, tile_size[0]):
-            for y in range(0, canvas.height, tile_size[1]):
-                tile = current_painting.resize(tile_size)
+        for x in range(0, canvas.width, current_painting.width):
+            for y in range(0, canvas.height, current_painting.height):
                 coordinates = Point(x, y)
-                canvas.paste(tile, coordinates)
+                canvas.paste(current_painting, coordinates)
                 index += 1
                 # So that it doesn't matter if there are more tiles than colours
                 current_painting = paintings[index % len(paintings)]
         return canvas
+
 
 show_gallery()
