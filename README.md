@@ -2,6 +2,8 @@
 
 Please see README.md in the Appropriation Art Exhibit folder for information relating to the application.
 
+Note: Ignore the recent commit titled 'test', that was when I was fiddling around with GitHub.
+
 ## Trello Board
 
 ### Tinkering Graphics Sprint
