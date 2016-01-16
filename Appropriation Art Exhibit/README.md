@@ -1,11 +1,9 @@
 #COMP120 Tinkering Graphics Project
-Source code contained within exhibit.py.
 
-Tile effect currently takes a very long time.
+##Additional Libraries and Frameworks Used:
 
-##Additional Libraries Used:
-
-[Pillow](https://python-pillow.github.io/)
+[Pillow](https://python-pillow.github.io/)  
+[Kivy](http://kivy.org/)
 
 ##Source Images Used:
 
