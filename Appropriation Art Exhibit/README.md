@@ -17,25 +17,25 @@ The application applies the four effects to four different images and then displ
 [Kivy](http://kivy.org/)
 
 ##Application-Specific Modules
-###character
+####character
 Contains enemy and player classes
 
-###color
+####color
 Contains a class for storing and manipulating colours.
 
-###effect
+####effect
 Contains classes relating to effects that can be applied to images.
 
-###exhibit
+####exhibit
 Contains a function that processes and saves images for the gallery.
 
-###painting
+####painting
 Contains a class for storing image data and manipulating images.
 
-###point
+####point
 Contains a class for storing and manipulating coordinate points.
 
-##shape
+####shape
 Contains classes for drawing shapes. Currently only contains a class for circles.
 
 ##Source Images Used
