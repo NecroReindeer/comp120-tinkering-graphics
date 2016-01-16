@@ -3,6 +3,7 @@ __author__ = 'Hat'
 
 # The number of colour components, in this case, 3 (red, green and blue)
 NUMBER_OF_COLOR_COMPONENTS = 3
+MAX_COMPONENT_VALUE = 255
 
 RED = (255,0,0)
 GREEN = (0, 255, 0)

@@ -37,9 +37,7 @@ class Point(object):
         self.__y = value
 
     def get_distance(self, other):
-        """Return distance between this point and
-        another point as a float.
-        """
+        """Return distance between this point and another point as a float."""
         x_distance = other.x - self.x
         y_distance = other.y - self.y
         distance = math.sqrt(x_distance**2.0 + y_distance**2.0)
