@@ -1,4 +1,4 @@
-"""Contain a class for storing and manipulating images.
+"""Contain a class for storing image data and manipulating images.
 
 This module contains a class that can be used to store and
 manipulate images.
