@@ -1,21 +1,45 @@
-__author__ = 'Hat'
+"""Contain a class for storing and manipulating colours.
+
+This module contains a class that can be used to store and
+manipulate RGB and RGBA colours.
+
+Classes:
+Color -- class for storing and manipulating RGB colours
+"""
 
 
-# The number of colour components, in this case, 3 (red, green and blue)
-NUMBER_OF_COLOR_COMPONENTS = 3
+# The number of RGB colour components is 3 (red, green and blue)
+RGB_COMPONENT_COUNT = 3
+RGBA_COMPONENT_COUNT = 4
 MAX_COMPONENT_VALUE = 255
 
+# Values of commonly referenced colours
 RED = (255,0,0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+MAGENTA = (255, 0, 255)
+CYAN = (0, 255, 255)
+YELLOW = (255, 255, 0)
 BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+
+# The index each RGBA colour component when stored as a tuple
+R_INDEX = 0
+G_INDEX = 1
+B_INDEX = 2
+A_INDEX = 3
 
 
 class Color(object):
-    """Class for manipulating colours. Properties allow access
-    to red, green, blue and alpha components as integers as well
-    as the whole color as a tuple.
+
+    """Contain properties and methods relating to manipulating colours.
+
+    This class contains methods that can be used for managing and manipulating
+    colours.
+    Its properties allow access to red, green, blue and alpha components individually
+    as well as the whole color. Luminance can also be accessed.
     """
+
     def __init__(self, red, green, blue, alpha=None):
         self.color = red, green, blue, alpha
 
@@ -28,52 +52,58 @@ class Color(object):
 
     @color.setter
     def color(self, color_tuple):
-        """Change red, green, blue, alpha and luminance
-        appropriately when color is set.
-        """
-        #Argument is a tuple so that length can be accessed
-        self.__red = color_tuple[0]
-        self.__green = color_tuple[1]
-        self.__blue = color_tuple[2]
-        if len(color_tuple) == 4:
-            self.__alpha = color_tuple[3]
+        """Change red, green, blue, alpha and luminance appropriately when color is set."""
+
+        self.__red = color_tuple[R_INDEX]
+        self.__green = color_tuple[G_INDEX]
+        self.__blue = color_tuple[B_INDEX]
+        if len(color_tuple) == RGBA_COMPONENT_COUNT:
+            self.__alpha = color_tuple[A_INDEX]
         self.__luminance = self.calculate_luminance()
 
     @property
     def red(self):
-        """Red component as an integer"""
+        """Return the red component as an integer"""
+
         return self.__red
 
     @red.setter
     def red(self, value):
-        """Set the red component to an integer and recalculate luminance"""
+        """Set the red component to given integer and recalculate luminance"""
+
         self.__red = value
         self.__luminance = self.calculate_luminance()
 
     @property
     def green(self):
-        """Green component as an integer"""
+        """REturn the green component as an integer"""
+
         return self.__green
 
     @green.setter
     def green(self, value):
-        """Set the green component to an integer and recalculate luminance"""
+        """Set the green component to given integer and recalculate luminance"""
+
         self.__green = value
         self.__luminance = self.calculate_luminance()
 
     @property
     def blue(self):
-        """Blue component as an integer"""
+        """Return the blue component as an integer"""
+
         return self.__blue
 
     @blue.setter
     def blue(self, value):
-        """Set the blue component to an integer and recalculate luminance"""
+        """Set the blue component to given integer and recalculate luminance"""
+
         self.__blue = value
         self.__luminance = self.calculate_luminance()
 
     @property
     def alpha(self):
+        """Return the alpha component as an integer"""
+
         return self.__alpha
 
     @alpha.setter
@@ -85,35 +115,52 @@ class Color(object):
         return self.__luminance
 
     def get_component_by_index(self, i):
-        """Allow access to color components by index"""
-        if i == 0:
+        """Return colour component corresponding to given index.
+
+        This methods allows access to colour components by their
+        index. It should be used in cases where looping through
+        the colours is necessary.
+        """
+
+        if i == R_INDEX:
             return self.red
-        elif i == 1:
+        elif i == G_INDEX:
             return self.green
-        elif i == 2:
+        elif i == B_INDEX:
             return self.blue
-        elif i == 3:
+        elif i == A_INDEX:
             return self.alpha
 
     def set_component_by_index(self, i, value):
-        """Set color components by index"""
-        if i == 0:
+        """Set the colour component corresponding to given index.
+
+        This methods allows colour component values to be set by their
+        index. It should be used in cases where looping through
+        the colours is necessary.
+        """
+
+        if i == R_INDEX:
             self.red = value
-        elif i == 1:
+        elif i == G_INDEX:
             self.green = value
-        elif i == 2:
+        elif i == B_INDEX:
             self.blue = value
-        elif i == 3:
+        elif i == A_INDEX:
             self.alpha = value
 
     def calculate_luminance(self):
-        # Luminance needs to be recalculated whenever any color
-        # component changes
+        """Recalculate the luminance of the colour.
+
+        This method recalculated the luminance of the stored colour.
+        It should be called whenever any colour component changes.
+        """
+
         lum = (self.red + self.green + self.blue)/3
         return lum
 
     def copy(self):
-        """Return the Color as a new instance"""
+        """Return a copy of the Color as a new instance"""
+
         return Color(*self.color)
 
     def __add__(self, other):

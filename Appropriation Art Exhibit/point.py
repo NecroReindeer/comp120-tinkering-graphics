@@ -1,14 +1,34 @@
-__author__ = 'Hat'
+"""Contain a class for storing and manipulating coordinate points.
+
+This module contains a class that can be used to store and
+manipulate (x, y) coordinates.
+
+Classes:
+Point -- class for storing and manipulating coordinates
+"""
+
 
 import math
 
 
 class Point(object):
-    """Class for storing and manipulating coordinates of points.
-    Properties allow access to x coordinate as an int, y coordinate
-    as an int, and coordinates as a tuple.
+
+    """Contain methods and properties for storing and manipulating coordinates.
+
+    This class contains methods and properties related to the manipulation
+    of coordinates.
+    Its properties allow access to x coordinate and y coordinate individually
+    as integers, and coordinates as a tuple.
     """
+
     def __init__(self, x, y):
+        """Initialise the properties.
+
+        Arguments:
+        x -- x-coordinate as a tuple
+        y -- y-coordinate as a tuple
+        """
+
         self.coordinates = x, y
 
     @property
@@ -38,7 +58,10 @@ class Point(object):
 
     def get_distance(self, other):
         """Return distance between this point and another point as a float."""
+
         x_distance = other.x - self.x
         y_distance = other.y - self.y
+
+        # Pythagoras' theorem
         distance = math.sqrt(x_distance**2.0 + y_distance**2.0)
         return distance

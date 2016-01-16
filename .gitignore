@@ -42,9 +42,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-#Output/input files and test
-*.jpg
-*.png
-test.py
+# Thing
+*.pyc
 
+#Pycharm IDE
+\Appropriation Art Exhibit\.idea\
 

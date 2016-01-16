@@ -11,7 +11,8 @@ ThreeColorEffect(Effect) -- An effect that reduces an image to three colors
 TileEffect(Effect) -- an effect that posterises and tiles an image
 """
 
-# Standard libraries
+
+# Standard Python libraries
 import random
 
 # External libraries
@@ -120,6 +121,7 @@ class ShuffleEffect(Effect):
         shuffle_step -- base amount that the pixels are allowed to move as an int
         randomness -- amount that the shuffle_step is allowed to vary for each pixel as an int
         """
+
         self.__shuffle_step = shuffle_step
         self.__randomness = randomness
 
@@ -213,7 +215,7 @@ class ThreeColorEffect(Effect):
         don't have an alpha channel.
         """
 
-        for component_index in range(color.NUMBER_OF_COLOR_COMPONENTS):
+        for component_index in range(color.RGB_COMPONENT_COUNT):
             self.change_dominant_color(component_index, painting)
         self.change_rest_to_black(painting)
 
@@ -251,7 +253,7 @@ class ThreeColorEffect(Effect):
 
         can_change = True
 
-        for current_component_index in range(color.NUMBER_OF_COLOR_COMPONENTS):
+        for current_component_index in range(color.RGB_COMPONENT_COUNT):
             current_component_value = current_pixel_color.get_component_by_index(current_component_index)
             component_being_checked = current_pixel_color.get_component_by_index(target_component_index)
 
@@ -385,6 +387,7 @@ class TileEffect(Effect):
                 else:
                     lum = lum_step
                     next_lum = lum + lum_step
+                    # It has done 1 iteration of luminance checking at this stage
                     iterations = 1
 
                     # Cycle through the luminance thresholds
@@ -437,6 +440,7 @@ class TileEffect(Effect):
         paintings -- list of Painting object instances
         """
 
+        # Start at first painting in list, index 0
         index = 0
         current_painting = paintings[index]
         # Can use any of the paintings to get the size as they are all same size
