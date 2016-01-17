@@ -18,6 +18,7 @@ import exhibit
 
 
 class ExhibitApp(App):
+
     """Display the original images and new images.
 
     This Kivy App displays each original image followed
@@ -47,6 +48,7 @@ class ExhibitApp(App):
             new_image = AsyncImage(source=(os.path.join(output_dir, filename)), allow_stretch=True)
             carousel.add_widget(new_image)
         return carousel
+
 
 if __name__ == '__main__':
     ExhibitApp().run()

@@ -8,6 +8,7 @@ Classes:
 Circle -- class for storing circle information and drawing circles
 """
 
+
 # Own module
 import point
 
@@ -58,38 +59,44 @@ class Circle():
         The circle is then filled using the idea in the top answer at -
         http://stackoverflow.com/questions/1201200/fast-algorithm-for-drawing-filled-circles
 
+        All of the literals present in this method were used in the algorithm
+        I was not sure what they represent so left them as literals
+
         Arguments:
         canvas -- instance of painting.Painting object to be used as a canvas
         """
 
-        # All of the literals in this method were used in the algorithm
-        # I was not sure what they represent so left them as literals
         x = self.radius
         y = 0
         # Named this variable the same as in the example on Wikipedia
         decision_over_2 = 1 - x
 
         while y <= x:
+            # Top quarter of circle
             for x_coord in range(self.centre.x - y, self.centre.x + y):
                 coord = point.Point(x_coord, self.centre.y - x)
                 if canvas.is_in_image(coord):
                     canvas.set_pixel_color(coord, self.color)
 
+            # Second quarter of circle
             for x_coord in range(self.centre.x - x, self.centre.x + x):
                 coord = point.Point(x_coord, self.centre.y - y)
                 if canvas.is_in_image(coord):
                     canvas.set_pixel_color(coord, self.color)
 
+            # Third quarter of circle
             for x_coord in range(self.centre.x - x, self.centre.x + x):
                 coord = point.Point(x_coord, self.centre.y + y)
                 if canvas.is_in_image(coord):
                     canvas.set_pixel_color(coord, self.color)
 
+            # Bottom quarter of circle
             for x_coord in range(self.centre.x - y, self.centre.x + y):
                 coord = point.Point(x_coord, self.centre.y + x)
                 if canvas.is_in_image(coord):
                     canvas.set_pixel_color(coord, self.color)
 
+            # Literals in algorithm, wasn't sure what they represent
             y += 1
             if decision_over_2 <= 0:
                 decision_over_2 += 2 * y + 1

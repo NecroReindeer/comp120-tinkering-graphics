@@ -31,6 +31,9 @@ class Effect():
 
     This class is an abstract class that all effects will inherit from.
     It has one method that should be implemented in all of its subclasses.
+
+    Public methods:
+    do_effect -- method to be implemented in subclasses that carries out the effect
     """
 
     def do_effect(self, painting):
@@ -85,6 +88,9 @@ class DotEffect(Effect):
         of a supplied radius, on top of a given background colour.
         The color of the circles correspond to the pixel that would have
         been at its centre.
+
+        Arguments:
+        painting -- the painting.Painting that the effect should be applied to
         """
 
         distance_between_centres = self.diameter + self.gap
@@ -138,13 +144,16 @@ class ShuffleEffect(Effect):
 
         This method processes an image so that the pixels of the
         image are shuffled with nearby pixels.
+
+        Arguments:
+        painting -- the painting.Painting that the effect should be applied to
         """
 
         original_painting = painting.copy()
         for x in range(0, painting.width, self.shuffle_step):
             for y in range(0, painting.height, self.shuffle_step):
                 current_coordinate = point.Point(x, y)
-                squaresize = self.get_random_squaresize()
+                squaresize = self.__get_random_squaresize()
                 pixel_square = original_painting.get_square(current_coordinate,
                                                             squaresize, squaresize)
                 shuffled_pixel_square = pixel_square
@@ -155,7 +164,7 @@ class ShuffleEffect(Effect):
                     pixel_to_be_replaced = shuffled_pixel_square.pop()
                     painting.set_pixel_color(pixel_to_be_replaced, new_pixel_color)
 
-    def get_random_squaresize(self):
+    def __get_random_squaresize(self):
         """Return a random square size.
 
         This method returns a random integer based on the
@@ -189,6 +198,7 @@ class ThreeColorEffect(Effect):
         difference -- amount that the component value must be larger than the other two
         replacement_colors -- colors that each dominant component will be replaced by
         """
+
         self.__threshold = threshold
         self.__difference = difference
         self.__replacement_colors = replacement_colors
@@ -213,13 +223,16 @@ class ThreeColorEffect(Effect):
         dependant on the dominant colour component of the pixel.
         Note that this effect is currently only compatible with RGB images that
         don't have an alpha channel.
+
+        Arguments:
+        painting -- the painting.Painting that the effect should be applied to
         """
 
         for component_index in range(color.RGB_COMPONENT_COUNT):
-            self.change_dominant_color(component_index, painting)
-        self.change_rest_to_black(painting)
+            self.__change_dominant_color(component_index, painting)
+        self.__change_rest_to_black(painting)
 
-    def change_dominant_color(self, current_component_index, painting):
+    def __change_dominant_color(self, current_component_index, painting):
         """Change the pixel to the appropriate replacement colour.
 
         This method changes the colour of the pixel to the replacement
@@ -234,12 +247,12 @@ class ThreeColorEffect(Effect):
             for y in range(painting.height):
                 current_coordinate = point.Point(x, y)
                 current_pixel_color = painting.get_pixel_color(current_coordinate)
-                can_change = self.check_dominant_color(current_pixel_color, current_component_index)
+                can_change = self.__check_dominant_color(current_pixel_color, current_component_index)
 
                 if can_change:
                     painting.set_pixel_color(current_coordinate, self.replacement_colors[current_component_index])
 
-    def check_dominant_color(self, current_pixel_color, target_component_index):
+    def __check_dominant_color(self, current_pixel_color, target_component_index):
         """Check if the target colour component in a pixel is dominant.
 
         This method check if the colour component at target_component_index
@@ -249,6 +262,10 @@ class ThreeColorEffect(Effect):
         other colour components multiplied by the effect's difference property.
         If the colour component passes these two checks, this method returns True.
         Otherwise, it returns False.
+
+        Arguments:
+        current_pixel_color - the colour as color.Color of the pixel to be checked
+        target_component_index - the index of the RGB colour component to be checked
         """
 
         can_change = True
@@ -265,11 +282,14 @@ class ThreeColorEffect(Effect):
 
         return can_change
 
-    def change_rest_to_black(self, painting):
+    def __change_rest_to_black(self, painting):
         """Change the remaining pixels to black.
 
         This method changes the colour of any pixel that
         isn't one of the replacement_colors to black.
+
+        Arguments:
+        painting -- the painting.Painting to be processed
         """
 
         for x in range(painting.width):
@@ -295,7 +315,7 @@ class TileEffect(Effect):
         """Initialises the properties.
 
         Arguments:
-        colors -- a list of Colors that the posterisation will be based on
+        colors -- a list of color.Color that the posterisation will be based on
         levels -- the number of posterisation levels as an integer
         size -- the number of tiles vertically and horizontally as an integer
         """
@@ -327,48 +347,60 @@ class TileEffect(Effect):
         made up of tiles that are smaller, posterised versions of the original
         image.
         The posterisations are based on  each of the colors in the colors property.
+
+        Arguments:
+        painting -- the painting.Painting that the effect should be applied to
         """
 
-        paintings = self.get_paintings(painting)
+        paintings = self.__get_paintings(painting)
         # No need to assign/return as lists in python are passed by reference!
-        self.color_posterise(paintings)
-        new_painting = self.tile_images(paintings)
+        self.__color_posterise(paintings)
+        new_painting = self.__tile_images(paintings)
         painting.img = new_painting
 
-    def get_paintings(self, painting):
+    def __get_paintings(self, painting):
         """Return a list of copies of the painting suitable for tiling.
 
         This method resizes the painting so that the resulting
         image after tiling is roughly the same size as the original image.
-        It then adds a number of copies of the painting corresponding to
-        the number of colours to a list and returns it.
+        It then adds a number of copies of the resized painting corresponding
+        to the number of colours to a list and returns it.
+
+        Arguments:
+        painting -- the painting to be resize, duplicated, and added to the list
         """
 
         paintings = []
-        smaller_painting = self.resize_painting(painting)
+        smaller_painting = self.__resize_painting(painting)
 
         for i in range(self.number_of_colors):
             new_painting = smaller_painting.copy()
             paintings.append(new_painting)
         return paintings
 
-    def resize_painting(self, painting):
+    def __resize_painting(self, painting):
         """Return a copy of the painting that is the size of a tile.
 
         This method resizes the painting so that the resulting image
         after tiling is roughly the same size as the original image.
         It then returns the resized painting.
+
+        Arguments:
+        painting -- the painting to be resized
         """
 
-        tile_size = self.get_tile_size(painting)
+        tile_size = self.__get_tile_size(painting)
         smaller_painting = painting.resize(tile_size)
         return smaller_painting
 
-    def color_posterise(self, paintings):
+    def __color_posterise(self, paintings):
         """Posterise each painting in the supplied list.
 
-        This method posterises each painting in the supplied list
-        based on the colours in self.colors.
+        This method posterises each painting.Painting in the
+        supplied list based on the colours in self.colors.
+
+        Arguments:
+        paintings -- list of identical paintings to be processed
         """
 
         # All paintings in paintings are the same at this point, so
@@ -405,30 +437,36 @@ class TileEffect(Effect):
                             next_lum = lum + lum_step
                             iterations += 1
 
-    def get_tile_size(self, painting):
+    def __get_tile_size(self, painting):
         """Return the size of that each tile should be.
 
         This method returns the size that each tile should be
         as a tuple such that the resulting image will be roughly
         the same size as the original image.
+
+        Arguments:
+        painting -- the painting.Painting the size should be based on
         """
 
         tile_width = painting.width / self.size
         tile_height = painting.height / self.size
         return tile_width, tile_height
 
-    def get_canvas_size(self, painting):
+    def __get_canvas_size(self, painting):
         """Return the size that the new painting will be.
 
         Returns the size that the resulting painting after tiling
         will be as a tuple.
+
+        Arguments:
+        painting -- the painting.Painting the size should be based on
         """
 
         canvas_width = painting.width * self.size
         canvas_height = painting.height * self.size
         return canvas_width, canvas_height
 
-    def tile_images(self, paintings):
+    def __tile_images(self, paintings):
         """Tile each painting in the list into a grid of the given size.
 
         This method tiles each Painting in the supplied list of paintings
@@ -444,7 +482,7 @@ class TileEffect(Effect):
         index = 0
         current_painting = paintings[index]
         # Can use any of the paintings to get the size as they are all same size
-        canvas = painting.Painting(Image.new(current_painting.mode, self.get_canvas_size(current_painting)))
+        canvas = painting.Painting(Image.new(current_painting.mode, self.__get_canvas_size(current_painting)))
 
         for x in range(0, canvas.width, current_painting.width):
             for y in range(0, canvas.height, current_painting.height):

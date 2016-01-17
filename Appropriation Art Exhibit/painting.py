@@ -23,6 +23,18 @@ class Painting(object):
     need to be defined/passed in to every function that uses them.
     It also contains methods for the basic manipulation of images such as
     clearing an image resizing.
+
+    Public methods:
+    show -- shows the painting in default image viewer
+    save -- save the painting in specified location
+    copy -- make a copy of the painting
+    paste -- insert painting into another painting
+    resize - copy and resize the painting-
+    set_pixel_color -- sets the colour of a given pixel
+    get_pixel_color -- returns the colour of a given pixel
+    clear image -- clears the painting to one colour
+    is_in_image -- check if a point is inside the painting
+    get_square -- return a square of pixels from the painting
     """
 
     def __init__(self, img):
@@ -91,7 +103,10 @@ class Painting(object):
         return Painting(self.img.copy())
 
     def save(self, path):
-        """Save the image in the location specified by the path string"""
+        """Save the image in the location specified by the path string
+
+        Arguements:
+        path -- string containing location that the image should be saved"""
 
         self.img.save(path)
 
@@ -102,6 +117,7 @@ class Painting(object):
         this instance. The position of the pasted image is specified by
         where the top left should be positioned.
 
+        Arguments:
         painting -- image that should be pasted as a Painting
         top_left -- position that the top left of basted image should be as point.Point
         """
@@ -153,8 +169,10 @@ class Painting(object):
         """Check if the supplied point is within the image.
 
         Arguments:
-        point -- coordinates of point to check as a point.Point"""
+        point -- coordinates of point to check as a point.Point
+        """
 
+        # Needs to be between 0 and its size
         if 0 < point.x < self.width and 0 < point.y < self.height:
             return True
         else:

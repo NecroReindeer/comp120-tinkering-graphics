@@ -19,14 +19,17 @@ class Point(object):
     of coordinates.
     Its properties allow access to x coordinate and y coordinate individually
     as integers, and coordinates as a tuple.
+
+    Public methods:
+    get_distance -- returns the distance between two points
     """
 
     def __init__(self, x, y):
         """Initialise the properties.
 
         Arguments:
-        x -- x-coordinate as a tuple
-        y -- y-coordinate as a tuple
+        x -- x coordinate of the point as a tuple
+        y -- y coordinate of the point as a tuple
         """
 
         self.coordinates = x, y
@@ -57,7 +60,7 @@ class Point(object):
         self.__y = value
 
     def get_distance(self, other):
-        """Return distance between this point and another point as a float."""
+        """Return distance between this point and another point as a float"""
 
         x_distance = other.x - self.x
         y_distance = other.y - self.y

@@ -8,7 +8,7 @@ Color -- class for storing and manipulating RGB colours
 """
 
 
-# The number of RGB colour components is 3 (red, green and blue)
+# The number of RGB/RGBA colour components, and the maximum value components can take
 RGB_COMPONENT_COUNT = 3
 RGBA_COMPONENT_COUNT = 4
 MAX_COMPONENT_VALUE = 255
@@ -38,6 +38,11 @@ class Color(object):
     colours.
     Its properties allow access to red, green, blue and alpha components individually
     as well as the whole color. Luminance can also be accessed.
+
+    Public methods:
+    get_component_by_index -- return the component corresponding to a given index
+    set_component_by_index -- set the value of the component at a given index
+    copy -- make a copy of the Color instance
     """
 
     def __init__(self, red, green, blue, alpha=None):
@@ -59,7 +64,7 @@ class Color(object):
         self.__blue = color_tuple[B_INDEX]
         if len(color_tuple) == RGBA_COMPONENT_COUNT:
             self.__alpha = color_tuple[A_INDEX]
-        self.__luminance = self.calculate_luminance()
+        self.__luminance = self.__calculate_luminance()
 
     @property
     def red(self):
@@ -72,7 +77,7 @@ class Color(object):
         """Set the red component to given integer and recalculate luminance"""
 
         self.__red = value
-        self.__luminance = self.calculate_luminance()
+        self.__luminance = self.__calculate_luminance()
 
     @property
     def green(self):
@@ -85,7 +90,7 @@ class Color(object):
         """Set the green component to given integer and recalculate luminance"""
 
         self.__green = value
-        self.__luminance = self.calculate_luminance()
+        self.__luminance = self.__calculate_luminance()
 
     @property
     def blue(self):
@@ -98,7 +103,7 @@ class Color(object):
         """Set the blue component to given integer and recalculate luminance"""
 
         self.__blue = value
-        self.__luminance = self.calculate_luminance()
+        self.__luminance = self.__calculate_luminance()
 
     @property
     def alpha(self):
@@ -108,10 +113,13 @@ class Color(object):
 
     @alpha.setter
     def alpha(self, value):
+        """Set the value of the alpha component to given integer."""
         self.__alpha = value
 
     @property
     def luminance(self):
+        """Return the luminance as an integer"""
+
         return self.__luminance
 
     def get_component_by_index(self, i):
@@ -148,7 +156,12 @@ class Color(object):
         elif i == A_INDEX:
             self.alpha = value
 
-    def calculate_luminance(self):
+    def copy(self):
+        """Return a copy of the Color as a new instance"""
+
+        return Color(*self.color)
+
+    def __calculate_luminance(self):
         """Recalculate the luminance of the colour.
 
         This method recalculated the luminance of the stored colour.
@@ -157,11 +170,6 @@ class Color(object):
 
         lum = (self.red + self.green + self.blue)/3
         return lum
-
-    def copy(self):
-        """Return a copy of the Color as a new instance"""
-
-        return Color(*self.color)
 
     def __add__(self, other):
         color = list(self.color)
