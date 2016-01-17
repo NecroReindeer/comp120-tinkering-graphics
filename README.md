@@ -1,6 +1,10 @@
 #COMP120 Tinkering Graphics Project
 
-Please see README.md in the Appropriation Art Exhibit folder for information relating to the application.
+Please see README.md in the Appropriation Art Exhibit folder for documentation relating to the application.
+
+**Please note:**  
+The repository for this assignment isn't forked from the Falmouth-Games-Academy one because I has made a lot of progress on this project in my own repository before the Falmouth-Games-Academy one was created.
+Had to delete the forked one for pull requests that I was copying code from this into as its been causing me loads of problems/confusion... (Ignore the recent commit titled 'test', that arose from those problems...)
 
 ## Trello Board
 
